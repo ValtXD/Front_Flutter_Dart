@@ -43,6 +43,9 @@ dependencies:
   shared_preferences: ^2.2.3
   fl_chart: ^0.68.0 # Nova dependência para gráficos
   intl: ^0.19.0 # Para formatação de números/datas se necessário (bom ter)
+  audioplayers: ^5.2.1 # Certifique-se de que esta linha está presente e a versão é compatível
+  flutter_tts: ^4.0.0 # Adicione esta linha (use a versão mais recente compatível se esta falhar)
+
 
 
 dev_dependencies:
@@ -57,6 +60,7 @@ dev_dependencies:
   flutter_lints: ^5.0.0
   build_runner: ^2.4.9 # Necessário para gerar arquivos .g.dart
   json_serializable: ^6.8.0 # Necessário para gerar arquivos .g.dart
+
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

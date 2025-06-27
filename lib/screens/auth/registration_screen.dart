@@ -3,8 +3,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:funfono1/api/api_service.dart';
-import 'package:funfono1/screens/main_menu/questionnaire_screen.dart'; // <--- CORRETO
-import 'package:funfono1/services/auth_state_service.dart'; // Importar AuthStateService
+import 'package:funfono1/screens/main_menu/questionnaire_screen.dart';
+import 'package:funfono1/services/auth_state_service.dart';
+import 'package:funfono1/screens/auth/login_screen.dart'; // Importar a tela de login
 
 class RegistrationScreen extends StatefulWidget {
   const RegistrationScreen({super.key});
@@ -38,10 +39,6 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
       });
 
       final apiService = Provider.of<ApiService>(context, listen: false);
-      // Aqui você precisará pegar a senha em texto plano para enviar ao backend,
-      // mas o objeto User tem 'passwordHash'. Seu backend espera 'password'.
-      // Vamos simular aqui, o ideal é que o User do frontend reflita o que o backend espera no registro.
-      // Vou usar um dummy hash para o modelo User no frontend após o registro, já que o backend faz o hash real.
       final user = await apiService.registerUser(
         _fullNameController.text,
         _emailController.text,
@@ -49,22 +46,17 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
         _phoneController.text,
         _isInTherapy,
       );
-
       setState(() {
         _isLoading = false;
       });
-
       if (user != null) {
         // Sucesso no cadastro
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Cadastro realizado com sucesso!')),
         );
-
-        // SALVAR O USUÁRIO LOGADO
         await AuthStateService().saveUser(user);
-
-        // Navegar para a próxima tela (Formulário do Questionário)
         if (mounted) {
+          // Após o cadastro, o usuário DEVE ir para o questionário
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(builder: (context) => const QuestionnaireScreen()),
@@ -92,6 +84,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
             key: _formKey,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
+              mainAxisSize: MainAxisSize.min, // Adicionado para melhor ajuste de conteúdo
               children: [
                 TextFormField(
                   controller: _fullNameController,
@@ -189,6 +182,19 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                   child: const Text(
                     'Cadastrar',
                     style: TextStyle(fontSize: 20),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                TextButton(
+                  onPressed: () {
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(builder: (context) => const LoginScreen()),
+                    );
+                  },
+                  child: const Text(
+                    'Já tem uma conta? Faça login aqui',
+                    style: TextStyle(fontSize: 16, color: Colors.blue),
                   ),
                 ),
               ],
