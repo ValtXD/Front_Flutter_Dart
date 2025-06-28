@@ -1,5 +1,6 @@
 // lib/screens/exercises/speech_exercise_screen.dart
 
+import 'dart:async';
 import 'dart:io';
 import 'dart:convert';
 import 'package:flutter/material.dart';
@@ -9,7 +10,9 @@ import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:funfono1/api/api_service.dart';
 import 'package:funfono1/services/auth_state_service.dart';
-import 'package:flutter_tts/flutter_tts.dart'; // <--- TTS
+import 'package:flutter_tts/flutter_tts.dart';
+// REMOVIDA: import 'package:speech_to_text/speech_to_text.dart';
+// REMOVIDA: import 'package:speech_to_text/speech_recognition_result.dart';
 
 class SpeechExerciseScreen extends StatefulWidget {
   const SpeechExerciseScreen({super.key});
@@ -22,34 +25,44 @@ class _SpeechExerciseScreenState extends State<SpeechExerciseScreen> {
   late AudioRecorder _audioRecorder;
   String? _currentPhrase;
   String? _recordedFilePath;
-  bool _isRecording = false;
+  bool _isRecording = false; // Estado de gravação de áudio
   bool _isLoading = false;
   Map<String, dynamic>? _evaluationResult;
 
   String? _currentUserId;
 
-  // Variáveis para o TTS
   late FlutterTts flutterTts;
-  bool _isSpeaking = false; // Estado para controlar se o TTS está falando
+  bool _isSpeaking = false;
+
+  // REMOVIDAS: Variáveis e inicialização para Speech-to-text
+  // final SpeechToText _speechToText = SpeechToText();
+  // bool _speechEnabled = false;
+  // String _lastWords = '';
+  // bool _isListening = false;
+  // Timer? _stopListeningTimer;
+
 
   @override
   void initState() {
     super.initState();
     _audioRecorder = AudioRecorder();
     _initExercise();
-    _initTts(); // <--- Inicializa o TTS
+    _initTts();
+    // REMOVIDA: _initSpeech();
   }
 
-  // Função para inicializar o TTS
+  // REMOVIDA: _initSpeech()
+  // void _initSpeech() async { /* ... */ }
+
   void _initTts() {
     flutterTts = FlutterTts();
-    flutterTts.setLanguage("pt-BR"); // Define o idioma para português do Brasil
-    flutterTts.setSpeechRate(0.5); // Velocidade da fala (ajuste conforme necessário)
-    flutterTts.setVolume(1.0); // Volume (0.0 a 1.0)
-    flutterTts.setPitch(1.0); // Tom da voz (0.5 a 2.0)
+    flutterTts.setLanguage("pt-BR");
+    flutterTts.setSpeechRate(0.5);
+    flutterTts.setVolume(1.0);
+    flutterTts.setPitch(1.0);
 
-    // Listeners para o estado do TTS (opcional, mas bom para feedback)
     flutterTts.setStartHandler(() {
+      if (!mounted) return;
       setState(() {
         _isSpeaking = true;
         print("TTS: Começou a falar.");
@@ -57,6 +70,7 @@ class _SpeechExerciseScreenState extends State<SpeechExerciseScreen> {
     });
 
     flutterTts.setCompletionHandler(() {
+      if (!mounted) return;
       setState(() {
         _isSpeaking = false;
         print("TTS: Terminou de falar.");
@@ -64,6 +78,7 @@ class _SpeechExerciseScreenState extends State<SpeechExerciseScreen> {
     });
 
     flutterTts.setErrorHandler((message) {
+      if (!mounted) return;
       setState(() {
         _isSpeaking = false;
         print("TTS: Erro: $message");
@@ -74,12 +89,10 @@ class _SpeechExerciseScreenState extends State<SpeechExerciseScreen> {
     });
   }
 
-  // Função para reproduzir a frase usando TTS
   Future<void> _speakPhrase(String phrase) async {
     if (_isSpeaking) {
-      await flutterTts.stop(); // Para a fala atual se estiver falando
+      await flutterTts.stop();
     }
-    // Verifica se a frase não é nula e não está vazia antes de falar
     if (phrase.isNotEmpty) {
       await flutterTts.speak(phrase);
     }
@@ -101,8 +114,8 @@ class _SpeechExerciseScreenState extends State<SpeechExerciseScreen> {
   }
 
   Future<void> _requestPermissions() async {
-    final status = await Permission.microphone.request();
-    if (status.isGranted) {
+    final microphoneStatus = await Permission.microphone.request();
+    if (microphoneStatus.isGranted) {
       print('Permissão de microfone concedida');
     } else {
       print('Permissão de microfone negada');
@@ -124,6 +137,7 @@ class _SpeechExerciseScreenState extends State<SpeechExerciseScreen> {
     setState(() {
       _isLoading = true;
       _evaluationResult = null;
+      // REMOVIDA: _lastWords = '';
     });
     final apiService = Provider.of<ApiService>(context, listen: false);
     final phrase = await apiService.generateSpeechPhrases();
@@ -138,84 +152,106 @@ class _SpeechExerciseScreenState extends State<SpeechExerciseScreen> {
     });
   }
 
-  Future<void> _startRecording() async {
-    try {
-      if (await Permission.microphone.isGranted) {
-        // Interrompe o TTS se ele estiver falando antes de gravar
-        if (_isSpeaking) {
-          await flutterTts.stop();
-        }
-        final directory = await getApplicationDocumentsDirectory();
-        _recordedFilePath = '${directory.path}/audio_phrase_${DateTime.now().millisecondsSinceEpoch}.m4a';
-
-        await _audioRecorder.start(
-          const RecordConfig(encoder: AudioEncoder.aacLc),
-          path: _recordedFilePath!,
-        );
-        setState(() {
-          _isRecording = true;
-        });
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Permissão de microfone necessária para gravar.')),
-        );
-      }
-    } catch (e) {
-      print('Erro ao iniciar gravação: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Erro ao iniciar gravação: $e')),
-      );
+  // Inicia a gravação de áudio (SEM STT nativo)
+  void _startRecording() async {
+    if (_isSpeaking) {
+      await flutterTts.stop();
     }
+    // REMOVIDA: if (_speechEnabled && !_isListening)
+    // Agora o microfone grava diretamente
+    if (!await _audioRecorder.hasPermission()) { // Verifica permissão antes de iniciar
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Permissão de microfone não concedida para gravar.')),
+      );
+      return;
+    }
+
+    setState(() {
+      // REMOVIDA: _lastWords = '';
+      // REMOVIDA: _isListening = true;
+    });
+
+    final directory = await getApplicationDocumentsDirectory();
+    _recordedFilePath = '${directory.path}/audio_phrase_${DateTime.now().millisecondsSinceEpoch}.m4a';
+    await _audioRecorder.start(
+      const RecordConfig(
+        encoder: AudioEncoder.aacLc,
+        sampleRate: 44100,
+        numChannels: 1,
+        bitRate: 128000,
+      ),
+      path: _recordedFilePath!,
+    );
+    setState(() { _isRecording = true; });
+
+    // REMOVIDO: Lógica de escuta do Speech-to-Text
+    // await _speechToText.listen(...)
+    // REMOVIDO: _stopListeningTimer = Timer(...)
   }
 
-  Future<void> _stopRecordingAndEvaluate() async {
-    try {
-      if (_isRecording) {
-        final path = await _audioRecorder.stop();
-        setState(() {
-          _isRecording = false;
-          _isLoading = true;
-        });
-        if (path != null && _currentUserId != null && _currentPhrase != null) {
-          _recordedFilePath = path;
-          print('Áudio gravado em: $_recordedFilePath');
+  // REMOVIDA: _onSpeechResult()
+  // void _onSpeechResult(SpeechRecognitionResult result) { /* ... */ }
 
+  // Para a gravação de áudio E envia para avaliação
+  Future<void> _stopRecordingAndEvaluate() async {
+    // REMOVIDO: _stopListeningTimer?.cancel();
+    // REMOVIDO: if (_speechToText.isListening) { await _speechToText.stop(); }
+    // REMOVIDO: if (mounted) setState(() { _isListening = false; });
+
+    if (await _audioRecorder.isRecording()) {
+      final path = await _audioRecorder.stop();
+      _recordedFilePath = path;
+    }
+    if (mounted) setState(() { _isRecording = false; });
+
+    if (mounted) setState(() { _isLoading = true; });
+
+    if (_currentUserId != null && _currentPhrase != null) {
+      final apiService = Provider.of<ApiService>(context, listen: false);
+
+      String? base64Audio;
+      try {
+        if (_recordedFilePath != null) {
           final audioFile = File(_recordedFilePath!);
-          final bytes = await audioFile.readAsBytes();
-          final base64Audio = base64Encode(bytes);
-          final apiService = Provider.of<ApiService>(context, listen: false);
-          final result = await apiService.evaluateSpeechPhrase(
-            _currentUserId!,
-            _currentPhrase!,
-            base64Audio,
-          );
-          setState(() {
-            _evaluationResult = result;
-            _isLoading = false;
-          });
-          if (result != null && result.containsKey('acertou')) {
-            await apiService.recordAttempt(
-              _currentUserId!,
-              _currentPhrase!,
-              'frase',
-              result['acertou'] as bool,
-            );
-            Provider.of<ApiService>(context, listen: false).getAttemptHistory(_currentUserId!);
+          if (await audioFile.exists()) {
+            final bytes = await audioFile.readAsBytes();
+            base64Audio = base64Encode(bytes);
+          } else {
+            print('AVISO: Arquivo de áudio gravado não existe em $_recordedFilePath');
           }
-        } else {
-          setState(() { _isLoading = false; });
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Erro: dados insuficientes para avaliação ou gravação falhou.')),
-          );
         }
+      } catch (e) {
+        print('ERRO ao ler arquivo de áudio gravado: $e');
+        base64Audio = null;
       }
-    } catch (e) {
-      print('Erro ao parar gravação e avaliar frase: $e');
-      setState(() {
+
+      // Chamada para a API agora sem userSpeechTranscription
+      final result = await apiService.evaluateSpeechPhrase(
+        _currentUserId!,
+        _currentPhrase!,
+        base64Audio ?? '', // <--- Envia apenas o Base64, vazio se null
+      );
+
+      if (mounted) setState(() {
+        _evaluationResult = result;
         _isLoading = false;
       });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Erro ao avaliar frase: $e')),
+
+      if (result != null && result.containsKey('acertou')) {
+        await apiService.recordAttempt(
+          _currentUserId!,
+          _currentPhrase!,
+          'frase',
+          result['acertou'] as bool,
+        );
+        if (mounted) {
+          Provider.of<ApiService>(context, listen: false).getAttemptHistory(_currentUserId!);
+        }
+      }
+    } else {
+      if (mounted) setState(() { _isLoading = false; });
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Erro: dados insuficientes para avaliação ou gravação falhou.')),
       );
     }
   }
@@ -223,7 +259,9 @@ class _SpeechExerciseScreenState extends State<SpeechExerciseScreen> {
   @override
   void dispose() {
     _audioRecorder.dispose();
-    flutterTts.stop(); // <--- Parar e liberar o TTS ao descartar o widget
+    flutterTts.stop();
+    // REMOVIDA: _speechToText.stop();
+    // REMOVIDA: _stopListeningTimer?.cancel();
     super.dispose();
   }
 
@@ -242,7 +280,7 @@ class _SpeechExerciseScreenState extends State<SpeechExerciseScreen> {
       appBar: AppBar(
         title: const Text('Exercício de Fala (Modo Livre)'),
       ),
-      body: _isLoading
+      body: _isLoading && _evaluationResult == null
           ? const Center(child: CircularProgressIndicator())
           : SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
@@ -250,7 +288,6 @@ class _SpeechExerciseScreenState extends State<SpeechExerciseScreen> {
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Conteúdo de Pronúncia da Frase
             if (_evaluationResult == null)
               Column(
                 children: [
@@ -265,17 +302,16 @@ class _SpeechExerciseScreenState extends State<SpeechExerciseScreen> {
                     style: const TextStyle(fontSize: 30, fontWeight: FontWeight.bold, color: Colors.blue),
                     textAlign: TextAlign.center,
                   ),
-                  const SizedBox(height: 20), // Espaço antes do botão de ouvir
+                  const SizedBox(height: 20),
 
-                  // Ícone para ouvir a frase
                   Align(
                     alignment: Alignment.center,
                     child: ElevatedButton.icon(
                       onPressed: _currentPhrase != null && !_isSpeaking
                           ? () => _speakPhrase(_currentPhrase!)
-                          : null, // Desabilita se já estiver falando ou frase nula
+                          : null,
                       icon: Icon(
-                        _isSpeaking ? Icons.volume_up_rounded : Icons.volume_up, // Altera ícone se falando
+                        _isSpeaking ? Icons.volume_up_rounded : Icons.volume_up,
                         color: _isSpeaking ? Colors.green : Colors.blue,
                       ),
                       label: Text(_isSpeaking ? 'Falando...' : 'Ouvir Frase', style: TextStyle(fontSize: 18)),
@@ -290,10 +326,11 @@ class _SpeechExerciseScreenState extends State<SpeechExerciseScreen> {
 
                   const SizedBox(height: 40),
                   GestureDetector(
-                    onTap: _isRecording ? _stopRecordingAndEvaluate : _startRecording,
+                    // onTapp: _speechEnabled && !_isListening ? _startListening : _stopRecordingAndEvaluate,
+                    onTap: _isRecording ? _stopRecordingAndEvaluate : _startRecording, // Volta para o controle manual da gravação
                     child: CircleAvatar(
                       radius: 60,
-                      backgroundColor: _isRecording ? Colors.red : Colors.blue,
+                      backgroundColor: _isRecording ? Colors.red : Colors.blue, // Estado de gravação
                       child: Icon(
                         _isRecording ? Icons.mic_off : Icons.mic,
                         size: 60,
@@ -303,12 +340,15 @@ class _SpeechExerciseScreenState extends State<SpeechExerciseScreen> {
                   ),
                   const SizedBox(height: 10),
                   Text(
-                    _isRecording ? 'Gravando...' : 'Toque para Falar',
+                    _isRecording
+                        ? 'Gravando...' // Estado de gravação
+                        : 'Toque para Falar',
                     style: const TextStyle(fontSize: 18),
                   ),
+                  // REMOVIDO: if (_lastWords.isNotEmpty)
+                  // REMOVIDO: Padding para mostrar transcrição
                 ],
               ),
-            // Conteúdo de Avaliação da Frase
             if (_evaluationResult != null)
               Column(
                 children: [
@@ -328,11 +368,21 @@ class _SpeechExerciseScreenState extends State<SpeechExerciseScreen> {
                       const Text('Incorreto.',
                           style: TextStyle(fontSize: 24, color: Colors.red, fontWeight: FontWeight.bold)),
                       const SizedBox(height: 10),
+                      if (_evaluationResult!['transcricao_assemblyai'] != null &&
+                          _evaluationResult!['transcricao_assemblyai'].isNotEmpty)
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 10),
+                          child: Text(
+                            'Transcrição: "${_evaluationResult!['transcricao_assemblyai']}"',
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(fontSize: 16, fontStyle: FontStyle.italic),
+                          ),
+                        ),
                       if (_evaluationResult!['avaliacao'] != null)
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 10),
                           child: Text(
-                            'Avaliação: ${_evaluationResult!['avaliacao']}',
+                            '${_evaluationResult!['avaliacao']}',
                             textAlign: TextAlign.center,
                             style: const TextStyle(fontSize: 16, fontStyle: FontStyle.italic),
                           ),

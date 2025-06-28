@@ -1,5 +1,6 @@
 // lib/screens/exercises/sound_exercise_screen.dart
 
+import 'dart:async';
 import 'dart:io';
 import 'dart:convert';
 import 'package:flutter/material.dart';
@@ -9,7 +10,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:funfono1/api/api_service.dart';
 import 'package:funfono1/services/auth_state_service.dart';
-import 'package:flutter_tts/flutter_tts.dart'; // <--- TTS
+import 'package:flutter_tts/flutter_tts.dart';
 
 class SoundExerciseScreen extends StatefulWidget {
   final List<String> selectedSounds;
@@ -34,28 +35,26 @@ class _SoundExerciseScreenState extends State<SoundExerciseScreen> {
 
   String? _currentUserId;
 
-  // Variáveis para o TTS
   late FlutterTts flutterTts;
-  bool _isSpeaking = false; // Estado para controlar se o TTS está falando
+  bool _isSpeaking = false;
 
   @override
   void initState() {
     super.initState();
     _audioRecorder = AudioRecorder();
     _initExercise();
-    _initTts(); // <--- Inicializa o TTS
+    _initTts();
   }
 
-  // Função para inicializar o TTS
   void _initTts() {
     flutterTts = FlutterTts();
-    flutterTts.setLanguage("pt-BR"); // Define o idioma para português do Brasil
-    flutterTts.setSpeechRate(0.5); // Velocidade da fala (ajuste conforme necessário)
-    flutterTts.setVolume(1.0); // Volume (0.0 a 1.0)
-    flutterTts.setPitch(1.0); // Tom da voz (0.5 a 2.0)
+    flutterTts.setLanguage("pt-BR");
+    flutterTts.setSpeechRate(0.5);
+    flutterTts.setVolume(1.0);
+    flutterTts.setPitch(1.0);
 
-    // Listeners para o estado do TTS (opcional, mas bom para feedback)
     flutterTts.setStartHandler(() {
+      if (!mounted) return;
       setState(() {
         _isSpeaking = true;
         print("TTS: Começou a falar.");
@@ -63,6 +62,7 @@ class _SoundExerciseScreenState extends State<SoundExerciseScreen> {
     });
 
     flutterTts.setCompletionHandler(() {
+      if (!mounted) return;
       setState(() {
         _isSpeaking = false;
         print("TTS: Terminou de falar.");
@@ -70,6 +70,7 @@ class _SoundExerciseScreenState extends State<SoundExerciseScreen> {
     });
 
     flutterTts.setErrorHandler((message) {
+      if (!mounted) return;
       setState(() {
         _isSpeaking = false;
         print("TTS: Erro: $message");
@@ -80,12 +81,10 @@ class _SoundExerciseScreenState extends State<SoundExerciseScreen> {
     });
   }
 
-  // Função para reproduzir a palavra usando TTS
   Future<void> _speakWord(String word) async {
     if (_isSpeaking) {
-      await flutterTts.stop(); // Para a fala atual se estiver falando
+      await flutterTts.stop();
     }
-    // Verifica se a palavra não é nula e não está vazia antes de falar
     if (word.isNotEmpty) {
       await flutterTts.speak(word);
     }
@@ -107,8 +106,8 @@ class _SoundExerciseScreenState extends State<SoundExerciseScreen> {
   }
 
   Future<void> _requestPermissions() async {
-    final status = await Permission.microphone.request();
-    if (status.isGranted) {
+    final microphoneStatus = await Permission.microphone.request();
+    if (microphoneStatus.isGranted) {
       print('Permissão de microfone concedida');
     } else {
       print('Permissão de microfone negada');
@@ -172,121 +171,115 @@ class _SoundExerciseScreenState extends State<SoundExerciseScreen> {
     }
   }
 
-  Future<void> _startRecording() async {
-    try {
-      if (await Permission.microphone.isGranted) {
-        // Interrompe o TTS se ele estiver falando antes de gravar
-        if (_isSpeaking) {
-          await flutterTts.stop();
-        }
-        final appDocDir = await getApplicationDocumentsDirectory();
-        final filePath = '${appDocDir.path}/audio_record.m4a';
-        await _audioRecorder.start(const RecordConfig(), path: filePath);
-        setState(() {
-          _isRecording = true;
-        });
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Permissão de microfone necessária para gravar.')),
-        );
-      }
-    } catch (e) {
-      print('Erro ao iniciar gravação: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Erro ao iniciar gravação: $e')),
-      );
+  void _startRecording() async {
+    if (_isSpeaking) {
+      await flutterTts.stop();
     }
-  }
-
-  Future<void> _stopRecording() async {
-    try {
-      final path = await _audioRecorder.stop();
-      if (mounted) {
-        setState(() {
-          _isRecording = false;
-          _recordedFilePath = path;
-          _isLoading = true;
-        });
-      }
-      if (path != null) {
-        _evaluatePronunciation(path);
-      }
-    } catch (e) {
-      print('Erro ao parar gravação: $e');
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Erro ao parar gravação.')),
-        );
-      }
-    }
-  }
-
-  Future<void> _evaluatePronunciation(String filePath) async {
-    if (_currentWord == null || _currentSound == null || _currentUserId == null) {
+    if (!await _audioRecorder.hasPermission()) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Erro: Dados incompletos para avaliação.')),
+        const SnackBar(content: Text('Permissão de microfone não concedida para gravar.')),
       );
-      setState(() { _isLoading = false; });
       return;
     }
 
-    final audioFile = File(filePath);
-    final bytes = await audioFile.readAsBytes();
-    final base64Audio = base64Encode(bytes);
+    setState(() {});
 
-    final apiService = Provider.of<ApiService>(context, listen: false);
-    try {
+    final directory = await getApplicationDocumentsDirectory();
+    _recordedFilePath = '${directory.path}/audio_phrase_${DateTime.now().millisecondsSinceEpoch}.m4a';
+    await _audioRecorder.start(
+      const RecordConfig(
+        encoder: AudioEncoder.aacLc,
+        sampleRate: 44100,
+        numChannels: 1,
+        bitRate: 128000,
+      ),
+      path: _recordedFilePath!,
+    );
+    setState(() { _isRecording = true; });
+  }
+
+  Future<void> _stopRecordingAndEvaluate() async {
+    if (await _audioRecorder.isRecording()) {
+      final path = await _audioRecorder.stop();
+      _recordedFilePath = path;
+    }
+    if (mounted) setState(() { _isRecording = false; });
+
+    if (mounted) setState(() { _isLoading = true; });
+
+    if (_currentUserId != null && _currentWord != null && _currentSound != null) {
+      final apiService = Provider.of<ApiService>(context, listen: false);
+
+      String? base64Audio;
+      try {
+        if (_recordedFilePath != null) {
+          final audioFile = File(_recordedFilePath!);
+          if (await audioFile.exists()) {
+            final bytes = await audioFile.readAsBytes();
+            base64Audio = base64Encode(bytes);
+          } else {
+            print('AVISO: Arquivo de áudio gravado não existe em $_recordedFilePath');
+          }
+        }
+      } catch (e) {
+        print('ERRO ao ler arquivo de áudio gravado: $e');
+        base64Audio = null;
+      }
+
       final result = await apiService.evaluatePronunciation(
         _currentUserId!,
         _currentWord!,
         _currentSound!,
-        base64Audio,
+        base64Audio ?? '',
       );
-      if (mounted) {
-        setState(() {
-          _evaluationResult = result;
-          _isLoading = false;
-        });
-        if (result != null && result.containsKey('correto')) {
-          await apiService.recordAttempt(
-            _currentUserId!,
-            _currentWord!,
-            _currentSound!,
-            result['correto'] as bool,
-          );
+
+      if (mounted) setState(() {
+        _evaluationResult = result;
+        _isLoading = false;
+      });
+
+      if (result != null && result.containsKey('correto')) {
+        await apiService.recordAttempt(
+          _currentUserId!,
+          _currentWord!,
+          _currentSound!,
+          result['correto'] as bool,
+        );
+        if (mounted) {
+          Provider.of<ApiService>(context, listen: false).getAttemptHistory(_currentUserId!);
         }
       }
-    } catch (e) {
-      print('Erro ao avaliar pronúncia: $e');
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-          _evaluationResult = {'error': 'Falha na avaliação. Tente novamente.'};
-        });
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Erro ao avaliar pronúncia. Verifique sua conexão.')),
-        );
-      }
+    } else {
+      if (mounted) setState(() { _isLoading = false; });
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Erro: dados insuficientes para avaliação ou gravação falhou.')),
+      );
     }
   }
 
   @override
   void dispose() {
     _audioRecorder.dispose();
-    flutterTts.stop(); // <--- Parar e liberar o TTS ao descartar o widget
+    flutterTts.stop();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    if (_currentUserId == null && !_isLoading) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Exercício de Sons')),
+        body: const Center(
+          child: Text('Usuário não logado. Por favor, faça login novamente.', textAlign: TextAlign.center,),
+        ),
+      );
+    }
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Exercício de Sons'),
       ),
-      body: _isLoading
+      body: _isLoading && _evaluationResult == null
           ? const Center(child: CircularProgressIndicator())
           : SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
@@ -295,7 +288,6 @@ class _SoundExerciseScreenState extends State<SoundExerciseScreen> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             if (_evaluationResult != null) ...[
-              // Se houver um resultado de avaliação
               (_evaluationResult!['error'] != null)
                   ? Text(
                 'Erro: ${_evaluationResult!['error']}',
@@ -303,33 +295,43 @@ class _SoundExerciseScreenState extends State<SoundExerciseScreen> {
                 textAlign: TextAlign.center,
               )
                   : (_evaluationResult!['correto'] ?? false)
-                  ? Column(
+                  ? Column( // Bloco para Correto
                 children: [
                   const Icon(Icons.check_circle, color: Colors.green, size: 60),
                   const SizedBox(height: 10),
-                  const Text(
-                    'Parabéns! Pronúncia correta!',
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.green),
+                  Text( // Exibe a mensagem de parabéns do Gemini
+                    _evaluationResult!['mensagem'] ?? 'Parabéns!',
+                    style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.green),
                     textAlign: TextAlign.center,
                   ),
                 ],
               )
-                  : Column(
-                // Se incorreto
+                  : Column( // Bloco para Incorreto
                 children: [
                   const Icon(Icons.cancel, color: Colors.red, size: 60),
                   const SizedBox(height: 10),
-                  const Text(
+                  const Text( // Apenas "Incorreto."
                     'Incorreto.',
                     style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.red),
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 10),
-                  if (_evaluationResult!['dica'] != null)
+                  // Mostra a transcrição abaixo do "Incorreto."
+                  if (_evaluationResult!['transcricao_assemblyai'] != null && _evaluationResult!['transcricao_assemblyai'].isNotEmpty)
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 10),
                       child: Text(
-                        'Avaliação: ${_evaluationResult!['dica']}',
+                        'Transcrição: "${_evaluationResult!['transcricao_assemblyai']}"',
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(fontSize: 16, fontStyle: FontStyle.italic),
+                      ),
+                    ),
+                  // Mostra a dica abaixo da transcrição (se houver)
+                  if (_evaluationResult!['mensagem'] != null && _evaluationResult!['mensagem'].isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                      child: Text(
+                        _evaluationResult!['mensagem']!,
                         textAlign: TextAlign.center,
                         style: const TextStyle(fontSize: 16, fontStyle: FontStyle.italic),
                       ),
@@ -370,17 +372,16 @@ class _SoundExerciseScreenState extends State<SoundExerciseScreen> {
                       style: const TextStyle(fontSize: 18, color: Colors.grey),
                       textAlign: TextAlign.center,
                     ),
-                  const SizedBox(height: 20), // Espaço antes do botão de ouvir
+                  const SizedBox(height: 20),
 
-                  // Ícone para ouvir a palavra
                   Align(
                     alignment: Alignment.center,
                     child: ElevatedButton.icon(
                       onPressed: _currentWord != null && !_isSpeaking
                           ? () => _speakWord(_currentWord!)
-                          : null, // Desabilita se já estiver falando ou palavra nula
+                          : null,
                       icon: Icon(
-                        _isSpeaking ? Icons.volume_up_rounded : Icons.volume_up, // Altera ícone se falando
+                        _isSpeaking ? Icons.volume_up_rounded : Icons.volume_up,
                         color: _isSpeaking ? Colors.green : Colors.blue,
                       ),
                       label: Text(_isSpeaking ? 'Falando...' : 'Ouvir Palavra', style: TextStyle(fontSize: 18)),
@@ -395,8 +396,7 @@ class _SoundExerciseScreenState extends State<SoundExerciseScreen> {
 
                   const SizedBox(height: 40),
                   GestureDetector(
-                    onLongPressStart: (_) => _startRecording(),
-                    onLongPressEnd: (_) => _stopRecording(),
+                    onTap: _isRecording ? _stopRecordingAndEvaluate : _startRecording,
                     child: CircleAvatar(
                       radius: 60,
                       backgroundColor: _isRecording ? Colors.red : Colors.blue,
@@ -409,16 +409,15 @@ class _SoundExerciseScreenState extends State<SoundExerciseScreen> {
                   ),
                   const SizedBox(height: 10),
                   Text(
-                    _isRecording ? 'Gravando...' : 'Pressione e segure para gravar',
-                    style: TextStyle(
-                      fontSize: 18,
-                      color: _isRecording ? Colors.red : Colors.grey.shade700,
-                    ),
+                    _isRecording
+                        ? 'Gravando...'
+                        : 'Pressione e segure para gravar',
+                    style: const TextStyle(fontSize: 18),
                   ),
                 ],
               )
             else
-              const Text( // Caso _currentWord seja null e não esteja carregando
+              const Text(
                 'Nenhuma palavra para praticar. Selecione um som.',
                 style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
                 textAlign: TextAlign.center,
@@ -428,4 +427,5 @@ class _SoundExerciseScreenState extends State<SoundExerciseScreen> {
       ),
     );
   }
+
 }

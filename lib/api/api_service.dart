@@ -8,9 +8,6 @@ import 'package:funfono1/models/questionnaire.dart';
 import '../models/attempt_data.dart';
 
 class ApiService {
-  // Use o IP do seu computador ou '10.0.2.2' para emulador Android
-  // Se estiver testando em um dispositivo físico, use o IP real do seu computador na rede local
-  // Ex: 'http://192.168.1.100:8080/api'
   static const String _baseUrl = 'http://192.168.0.8:8080/api'; // Certifique-se de que este IP esteja correto
 
   // --- Rotas de Autenticação ---
@@ -45,7 +42,6 @@ class ApiService {
     }
   }
 
-  // MÉTODO LOGIN DE USUÁRIO ATUALIZADO PARA USAR fullName
   Future<User?> loginUser(String fullName, String password) async {
     final url = Uri.parse('$_baseUrl/auth/login');
     try {
@@ -53,7 +49,7 @@ class ApiService {
         url,
         headers: {'Content-Type': 'application/json'},
         body: json.encode({
-          'fullName': fullName, // Enviando fullName em vez de email
+          'fullName': fullName,
           'password': password,
         }),
       );
@@ -100,7 +96,6 @@ class ApiService {
     final url = Uri.parse('$_baseUrl/users/$userId/status');
     try {
       final response = await http.get(url);
-
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         return data['has_questionnaire'] ?? false;
@@ -116,7 +111,6 @@ class ApiService {
 
   // --- Rotas de Exercícios (Sons e Fala) ---
 
-  // Adaptação para o retorno do seu backend (sounds.txt) que é {"palavras": [{"palavra": "chácara", "som": "ch"}]}
   Future<List<Map<String, String>>?> getSoundsWords(List<String> preferences, List<String> targets) async {
     final url = Uri.parse('$_baseUrl/exercises/sounds');
     try {
@@ -131,7 +125,6 @@ class ApiService {
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         if (data != null && data['palavras'] is List) {
-          // Mapeia a lista de mapas para o formato esperado List<Map<String, String>>
           return (data['palavras'] as List)
               .map((e) => Map<String, String>.from(e as Map))
               .toList();
@@ -147,6 +140,7 @@ class ApiService {
     }
   }
 
+  // MÉTODO evaluatePronunciation ATUALIZADO: agora só recebe Base64
   Future<Map<String, dynamic>?> evaluatePronunciation(String userId, String word, String sound, String userSpeechBase64) async {
     final url = Uri.parse('$_baseUrl/exercises/evaluate');
     try {
@@ -157,7 +151,7 @@ class ApiService {
           'user_id': userId,
           'palavra': word,
           'som': sound,
-          'fala_usuario': userSpeechBase64,
+          'fala_usuario_audio_base64': userSpeechBase64, // <--- Chave para o áudio Base64
         }),
       );
       if (response.statusCode == 200) {
@@ -176,7 +170,6 @@ class ApiService {
     final url = Uri.parse('$_baseUrl/speech/generate');
     try {
       final response = await http.get(url);
-
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         return data['frase'] as String?;
@@ -190,6 +183,7 @@ class ApiService {
     }
   }
 
+  // MÉTODO evaluateSpeechPhrase ATUALIZADO: agora só recebe Base64
   Future<Map<String, dynamic>?> evaluateSpeechPhrase(String userId, String phrase, String userSpeechBase64) async {
     final url = Uri.parse('$_baseUrl/speech/evaluate');
     try {
@@ -199,7 +193,7 @@ class ApiService {
         body: json.encode({
           'user_id': userId,
           'frase': phrase,
-          'fala_usuario': userSpeechBase64,
+          'fala_usuario_audio_base64': userSpeechBase64, // <--- Chave para o áudio Base64
         }),
       );
       if (response.statusCode == 200) {
