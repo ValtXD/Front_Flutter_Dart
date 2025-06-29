@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:funfono1/models/user.dart';
 import 'package:funfono1/models/questionnaire.dart';
+import 'package:funfono1/models/attempt_history.dart'; // NOVO IMPORT
 
 import '../models/attempt_data.dart';
 
@@ -233,20 +234,49 @@ class ApiService {
     }
   }
 
-  Future<List<AttemptData>> getAttemptHistory(String userId) async {
-    final List<AttemptData> history = [];
-    history.add(AttemptData(correct: true, type: 'som'));
-    history.add(AttemptData(correct: false, type: 'som'));
-    history.add(AttemptData(correct: true, type: 'som'));
-    history.add(AttemptData(correct: true, type: 'fala'));
-    history.add(AttemptData(correct: false, type: 'fala'));
-    history.add(AttemptData(correct: true, type: 'fala'));
-    history.add(AttemptData(correct: true, type: 'som'));
-    history.add(AttemptData(correct: false, type: 'fala'));
-    history.add(AttemptData(correct: true, type: 'som'));
-    history.add(AttemptData(correct: true, type: 'fala'));
-    history.add(AttemptData(correct: false, type: 'som'));
+// --- Novos métodos para Histórico ---
 
-    return history;
+  Future<List<AttemptHistory>> getAttemptHistory(String userId) async {
+    final url = Uri.parse('$_baseUrl/users/$userId/history');
+    try {
+      final response = await http.get(url);
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        if (data != null && data['history'] is List) {
+          return (data['history'] as List)
+              .map((e) => AttemptHistory.fromJson(e as Map<String, dynamic>))
+              .toList();
+        }
+        return [];
+      } else {
+        print('Erro ao obter histórico de tentativas: ${response.statusCode} - ${response.body}');
+        return [];
+      }
+    } catch (e) {
+      print('Exceção ao obter histórico de tentativas: $e');
+      return [];
+    }
   }
+
+  Future<bool> deleteAttempt(String userId, int attemptId, String type) async {
+    final url = Uri.parse('$_baseUrl/users/$userId/attempts/$attemptId');
+    try {
+      final response = await http.delete(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({'type': type}), // Envie o tipo da tentativa para o backend
+      );
+      if (response.statusCode == 200) {
+        print('Tentativa $attemptId excluída com sucesso!');
+        return true;
+      } else {
+        print('Erro ao excluir tentativa: ${response.statusCode} - ${response.body}');
+        return false;
+      }
+    } catch (e) {
+      print('Exceção ao excluir tentativa: $e');
+      return false;
+    }
+  }
+
 }

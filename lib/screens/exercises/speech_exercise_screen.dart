@@ -11,12 +11,9 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:funfono1/api/api_service.dart';
 import 'package:funfono1/services/auth_state_service.dart';
 import 'package:flutter_tts/flutter_tts.dart';
-// REMOVIDA: import 'package:speech_to_text/speech_to_text.dart';
-// REMOVIDA: import 'package:speech_to_text/speech_recognition_result.dart';
 
 class SpeechExerciseScreen extends StatefulWidget {
   const SpeechExerciseScreen({super.key});
-
   @override
   State<SpeechExerciseScreen> createState() => _SpeechExerciseScreenState();
 }
@@ -25,22 +22,13 @@ class _SpeechExerciseScreenState extends State<SpeechExerciseScreen> {
   late AudioRecorder _audioRecorder;
   String? _currentPhrase;
   String? _recordedFilePath;
-  bool _isRecording = false; // Estado de gravação de áudio
+  bool _isRecording = false;
   bool _isLoading = false;
   Map<String, dynamic>? _evaluationResult;
 
   String? _currentUserId;
-
   late FlutterTts flutterTts;
   bool _isSpeaking = false;
-
-  // REMOVIDAS: Variáveis e inicialização para Speech-to-text
-  // final SpeechToText _speechToText = SpeechToText();
-  // bool _speechEnabled = false;
-  // String _lastWords = '';
-  // bool _isListening = false;
-  // Timer? _stopListeningTimer;
-
 
   @override
   void initState() {
@@ -48,11 +36,7 @@ class _SpeechExerciseScreenState extends State<SpeechExerciseScreen> {
     _audioRecorder = AudioRecorder();
     _initExercise();
     _initTts();
-    // REMOVIDA: _initSpeech();
   }
-
-  // REMOVIDA: _initSpeech()
-  // void _initSpeech() async { /* ... */ }
 
   void _initTts() {
     flutterTts = FlutterTts();
@@ -68,7 +52,6 @@ class _SpeechExerciseScreenState extends State<SpeechExerciseScreen> {
         print("TTS: Começou a falar.");
       });
     });
-
     flutterTts.setCompletionHandler(() {
       if (!mounted) return;
       setState(() {
@@ -76,7 +59,6 @@ class _SpeechExerciseScreenState extends State<SpeechExerciseScreen> {
         print("TTS: Terminou de falar.");
       });
     });
-
     flutterTts.setErrorHandler((message) {
       if (!mounted) return;
       setState(() {
@@ -137,7 +119,6 @@ class _SpeechExerciseScreenState extends State<SpeechExerciseScreen> {
     setState(() {
       _isLoading = true;
       _evaluationResult = null;
-      // REMOVIDA: _lastWords = '';
     });
     final apiService = Provider.of<ApiService>(context, listen: false);
     final phrase = await apiService.generateSpeechPhrases();
@@ -157,20 +138,14 @@ class _SpeechExerciseScreenState extends State<SpeechExerciseScreen> {
     if (_isSpeaking) {
       await flutterTts.stop();
     }
-    // REMOVIDA: if (_speechEnabled && !_isListening)
-    // Agora o microfone grava diretamente
-    if (!await _audioRecorder.hasPermission()) { // Verifica permissão antes de iniciar
+    if (!await _audioRecorder.hasPermission()) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Permissão de microfone não concedida para gravar.')),
       );
       return;
     }
 
-    setState(() {
-      // REMOVIDA: _lastWords = '';
-      // REMOVIDA: _isListening = true;
-    });
-
+    setState(() {});
     final directory = await getApplicationDocumentsDirectory();
     _recordedFilePath = '${directory.path}/audio_phrase_${DateTime.now().millisecondsSinceEpoch}.m4a';
     await _audioRecorder.start(
@@ -183,21 +158,10 @@ class _SpeechExerciseScreenState extends State<SpeechExerciseScreen> {
       path: _recordedFilePath!,
     );
     setState(() { _isRecording = true; });
-
-    // REMOVIDO: Lógica de escuta do Speech-to-Text
-    // await _speechToText.listen(...)
-    // REMOVIDO: _stopListeningTimer = Timer(...)
   }
-
-  // REMOVIDA: _onSpeechResult()
-  // void _onSpeechResult(SpeechRecognitionResult result) { /* ... */ }
 
   // Para a gravação de áudio E envia para avaliação
   Future<void> _stopRecordingAndEvaluate() async {
-    // REMOVIDO: _stopListeningTimer?.cancel();
-    // REMOVIDO: if (_speechToText.isListening) { await _speechToText.stop(); }
-    // REMOVIDO: if (mounted) setState(() { _isListening = false; });
-
     if (await _audioRecorder.isRecording()) {
       final path = await _audioRecorder.stop();
       _recordedFilePath = path;
@@ -205,10 +169,8 @@ class _SpeechExerciseScreenState extends State<SpeechExerciseScreen> {
     if (mounted) setState(() { _isRecording = false; });
 
     if (mounted) setState(() { _isLoading = true; });
-
     if (_currentUserId != null && _currentPhrase != null) {
       final apiService = Provider.of<ApiService>(context, listen: false);
-
       String? base64Audio;
       try {
         if (_recordedFilePath != null) {
@@ -225,18 +187,18 @@ class _SpeechExerciseScreenState extends State<SpeechExerciseScreen> {
         base64Audio = null;
       }
 
-      // Chamada para a API agora sem userSpeechTranscription
       final result = await apiService.evaluateSpeechPhrase(
         _currentUserId!,
         _currentPhrase!,
-        base64Audio ?? '', // <--- Envia apenas o Base64, vazio se null
+        base64Audio ?? '',
       );
-
       if (mounted) setState(() {
         _evaluationResult = result;
         _isLoading = false;
       });
-
+      // REMOVIDA: A chamada a apiService.recordAttempt() é redundante aqui
+      // pois evaluateSpeechPhrase já persiste os dados detalhados.
+      /*
       if (result != null && result.containsKey('acertou')) {
         await apiService.recordAttempt(
           _currentUserId!,
@@ -245,9 +207,10 @@ class _SpeechExerciseScreenState extends State<SpeechExerciseScreen> {
           result['acertou'] as bool,
         );
         if (mounted) {
-          Provider.of<ApiService>(context, listen: false).getAttemptHistory(_currentUserId!);
+          // Provider.of<ApiService>(context, listen: false).getAttemptHistory(_currentUserId!); // Removida a chamada desnecessária
         }
       }
+      */
     } else {
       if (mounted) setState(() { _isLoading = false; });
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(
@@ -260,8 +223,6 @@ class _SpeechExerciseScreenState extends State<SpeechExerciseScreen> {
   void dispose() {
     _audioRecorder.dispose();
     flutterTts.stop();
-    // REMOVIDA: _speechToText.stop();
-    // REMOVIDA: _stopListeningTimer?.cancel();
     super.dispose();
   }
 
@@ -326,11 +287,10 @@ class _SpeechExerciseScreenState extends State<SpeechExerciseScreen> {
 
                   const SizedBox(height: 40),
                   GestureDetector(
-                    // onTapp: _speechEnabled && !_isListening ? _startListening : _stopRecordingAndEvaluate,
-                    onTap: _isRecording ? _stopRecordingAndEvaluate : _startRecording, // Volta para o controle manual da gravação
+                    onTap: _isRecording ? _stopRecordingAndEvaluate : _startRecording,
                     child: CircleAvatar(
                       radius: 60,
-                      backgroundColor: _isRecording ? Colors.red : Colors.blue, // Estado de gravação
+                      backgroundColor: _isRecording ? Colors.red : Colors.blue,
                       child: Icon(
                         _isRecording ? Icons.mic_off : Icons.mic,
                         size: 60,
@@ -341,12 +301,10 @@ class _SpeechExerciseScreenState extends State<SpeechExerciseScreen> {
                   const SizedBox(height: 10),
                   Text(
                     _isRecording
-                        ? 'Gravando...' // Estado de gravação
+                        ? 'Gravando...'
                         : 'Toque para Falar',
                     style: const TextStyle(fontSize: 18),
                   ),
-                  // REMOVIDO: if (_lastWords.isNotEmpty)
-                  // REMOVIDO: Padding para mostrar transcrição
                 ],
               ),
             if (_evaluationResult != null)

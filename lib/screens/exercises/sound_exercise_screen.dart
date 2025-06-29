@@ -52,7 +52,6 @@ class _SoundExerciseScreenState extends State<SoundExerciseScreen> {
     flutterTts.setSpeechRate(0.5);
     flutterTts.setVolume(1.0);
     flutterTts.setPitch(1.0);
-
     flutterTts.setStartHandler(() {
       if (!mounted) return;
       setState(() {
@@ -60,7 +59,6 @@ class _SoundExerciseScreenState extends State<SoundExerciseScreen> {
         print("TTS: Começou a falar.");
       });
     });
-
     flutterTts.setCompletionHandler(() {
       if (!mounted) return;
       setState(() {
@@ -68,7 +66,6 @@ class _SoundExerciseScreenState extends State<SoundExerciseScreen> {
         print("TTS: Terminou de falar.");
       });
     });
-
     flutterTts.setErrorHandler((message) {
       if (!mounted) return;
       setState(() {
@@ -204,12 +201,10 @@ class _SoundExerciseScreenState extends State<SoundExerciseScreen> {
       _recordedFilePath = path;
     }
     if (mounted) setState(() { _isRecording = false; });
-
     if (mounted) setState(() { _isLoading = true; });
 
     if (_currentUserId != null && _currentWord != null && _currentSound != null) {
       final apiService = Provider.of<ApiService>(context, listen: false);
-
       String? base64Audio;
       try {
         if (_recordedFilePath != null) {
@@ -232,12 +227,13 @@ class _SoundExerciseScreenState extends State<SoundExerciseScreen> {
         _currentSound!,
         base64Audio ?? '',
       );
-
       if (mounted) setState(() {
         _evaluationResult = result;
         _isLoading = false;
       });
-
+      // REMOVIDA: A chamada a apiService.recordAttempt() é redundante aqui
+      // pois evaluatePronunciation já persiste os dados detalhados.
+      /*
       if (result != null && result.containsKey('correto')) {
         await apiService.recordAttempt(
           _currentUserId!,
@@ -246,9 +242,10 @@ class _SoundExerciseScreenState extends State<SoundExerciseScreen> {
           result['correto'] as bool,
         );
         if (mounted) {
-          Provider.of<ApiService>(context, listen: false).getAttemptHistory(_currentUserId!);
+          // apiService.getAttemptHistory(_currentUserId!); // Removida a chamada desnecessária, histórico é obtido na ProgressScreen
         }
       }
+      */
     } else {
       if (mounted) setState(() { _isLoading = false; });
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(
@@ -427,5 +424,4 @@ class _SoundExerciseScreenState extends State<SoundExerciseScreen> {
       ),
     );
   }
-
 }

@@ -1,7 +1,10 @@
+// lib/screens/main_menu/menu_screen.dart
+
 import 'package:flutter/material.dart';
 import 'package:funfono1/screens/exercises/exercises_menu_screen.dart';
-import 'package:funfono1/services/auth_state_service.dart'; // Importar AuthStateService
-import 'package:funfono1/models/user.dart'; // Importar o modelo User
+import 'package:funfono1/services/auth_state_service.dart';
+import 'package:funfono1/models/user.dart';
+import 'package:funfono1/screens/main_menu/progress_screen.dart'; // NOVO IMPORT
 
 class MenuScreen extends StatefulWidget {
   const MenuScreen({super.key});
@@ -11,78 +14,108 @@ class MenuScreen extends StatefulWidget {
 }
 
 class _MenuScreenState extends State<MenuScreen> {
-  User? _currentUser; // Variável para armazenar o usuário logado
+  User? _currentUser;
 
   @override
   void initState() {
     super.initState();
-    print('MenuScreen: initState - Carregando usuário...'); // Log de depuração
-    _loadCurrentUser(); // Carregar o usuário ao inicializar a tela
+    _loadCurrentUser();
   }
 
   Future<void> _loadCurrentUser() async {
     final user = await AuthStateService().getLoggedInUser();
-    if (mounted) { // Verifica se o widget ainda está montado antes de chamar setState
+    if (mounted) {
       setState(() {
         _currentUser = user;
-        print('MenuScreen: Usuário carregado: ${_currentUser?.fullName}'); // Log de depuração
       });
-    } else {
-      print('MenuScreen: Widget não montado, não é possível chamar setState.'); // Log de depuração
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
         title: const Text('Menu Principal'),
-        automaticallyImplyLeading: false, // Remove o botão de voltar
+        centerTitle: true,
+        automaticallyImplyLeading: false,
       ),
-      body: Center(
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.symmetric(vertical: 30, horizontal: 16),
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            // Exibe "Olá, [Nome do Usuário]!" ou "Olá, Usuário!" se o nome não for encontrado
             Text(
-              'Olá, ${_currentUser?.fullName ?? 'Usuário'}!', // <--- Confirmação da mudança aqui
+              'Olá, ${_currentUser?.fullName ?? 'Usuário'}!',
               style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 10),
+            const Text(
+              'Bem Vindo ao FunFono',
+              style: TextStyle(fontSize: 18, fontStyle: FontStyle.italic),
+              textAlign: TextAlign.center,
             ),
             const SizedBox(height: 40),
-            // Ícone do Prontuário - MVP: apenas um placeholder
-            GestureDetector(
-              onTap: () {
-                // TODO: Implementar navegação para a tela de Prontuário
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Prontuário (MVP: Em breve!)')),
-                );
-              },
-              child: const Column(
-                children: [
-                  Icon(Icons.folder_shared, size: 80, color: Colors.blue),
-                  SizedBox(height: 8),
-                  Text('Prontuário', style: TextStyle(fontSize: 18)),
-                ],
-              ),
-            ),
-            const SizedBox(height: 40),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const ExercisesMenuScreen()),
-                );
-              },
-              style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 15),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(30),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                // Botão Exercícios
+                GestureDetector(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const ExercisesMenuScreen()),
+                    );
+                  },
+                  child: Container(
+                    width: 120,
+                    height: 120,
+                    margin: const EdgeInsets.symmetric(horizontal: 10),
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.blue, width: 2),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: const [
+                        Icon(Icons.assignment, size: 50, color: Colors.blue),
+                        SizedBox(height: 10),
+                        Text('Exercícios',
+                            style: TextStyle(fontSize: 16, color: Colors.blue)),
+                      ],
+                    ),
+                  ),
                 ),
-              ),
-              child: const Text(
-                'Ir para Exercícios',
-                style: TextStyle(fontSize: 20),
-              ),
+
+                // Botão Progresso (ATUALIZADO PARA NAVEGAR PARA ProgressScreen)
+                GestureDetector(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const ProgressScreen()),
+                    );
+                  },
+                  child: Container(
+                    width: 120,
+                    height: 120,
+                    margin: const EdgeInsets.symmetric(horizontal: 10),
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.blue, width: 2),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: const [
+                        Icon(Icons.trending_up, size: 50, color: Colors.blue),
+                        SizedBox(height: 10),
+                        Text('Progresso',
+                            style: TextStyle(fontSize: 16, color: Colors.blue)),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
             ),
           ],
         ),
