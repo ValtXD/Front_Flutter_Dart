@@ -1,10 +1,11 @@
-// lib/screens/main_menu/menu_screen.dart
+// lib/screens/main_menu/menu_screen.dart (trecho relevante)
 
 import 'package:flutter/material.dart';
 import 'package:funfono1/screens/exercises/exercises_menu_screen.dart';
 import 'package:funfono1/services/auth_state_service.dart';
 import 'package:funfono1/models/user.dart';
-import 'package:funfono1/screens/main_menu/progress_screen.dart'; // NOVO IMPORT
+import 'package:funfono1/screens/main_menu/progress_screen.dart';
+import 'package:funfono1/screens/main_menu/schedule_screen.dart'; // NOVO IMPORT
 
 class MenuScreen extends StatefulWidget {
   const MenuScreen({super.key});
@@ -88,7 +89,7 @@ class _MenuScreenState extends State<MenuScreen> {
                   ),
                 ),
 
-                // Botão Progresso (ATUALIZADO PARA NAVEGAR PARA ProgressScreen)
+                // Botão Progresso
                 GestureDetector(
                   onTap: () {
                     Navigator.push(
@@ -115,6 +116,40 @@ class _MenuScreenState extends State<MenuScreen> {
                     ),
                   ),
                 ),
+              ],
+            ),
+            const SizedBox(height: 20), // Espaçamento para a nova linha de botões
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                // NOVO Botão Cronograma
+                GestureDetector(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const ScheduleScreen()), // NAVEGA PARA A TELA DE CRONOGRAMA
+                    );
+                  },
+                  child: Container(
+                    width: 120,
+                    height: 120,
+                    margin: const EdgeInsets.symmetric(horizontal: 10),
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.blue, width: 2),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: const [
+                        Icon(Icons.calendar_today, size: 50, color: Colors.blue), // Ícone de calendário
+                        SizedBox(height: 10),
+                        Text('Cronograma',
+                            style: TextStyle(fontSize: 16, color: Colors.blue)),
+                      ],
+                    ),
+                  ),
+                ),
+                // Você pode adicionar mais botões aqui se quiser outra funcionalidade nesta linha
               ],
             ),
           ],

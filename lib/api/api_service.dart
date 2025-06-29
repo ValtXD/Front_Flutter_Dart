@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 import 'package:funfono1/models/user.dart';
 import 'package:funfono1/models/questionnaire.dart';
 import 'package:funfono1/models/attempt_history.dart'; // NOVO IMPORT
+import 'package:funfono1/models/reminder.dart'; // NOVO IMPORT
 
 import '../models/attempt_data.dart';
 
@@ -275,6 +276,91 @@ class ApiService {
       }
     } catch (e) {
       print('Exceção ao excluir tentativa: $e');
+      return false;
+    }
+  }
+
+  // --- Rotas de Lembretes (Reminders) ---
+
+  Future<Reminder?> createReminder(Reminder reminder) async {
+    final url = Uri.parse('$_baseUrl/reminders');
+    try {
+      final response = await http.post(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode(reminder.toJson()),
+      );
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> responseBody = json.decode(response.body);
+        return Reminder.fromJson(responseBody['reminder'] as Map<String, dynamic>);
+      } else {
+        print('Erro ao criar lembrete: ${response.statusCode} - ${response.body}');
+        return null;
+      }
+    } catch (e) {
+      print('Exceção ao criar lembrete: $e');
+      return null;
+    }
+  }
+
+  Future<List<Reminder>> getReminders(String userId) async {
+    final url = Uri.parse('$_baseUrl/reminders/$userId');
+    try {
+      final response = await http.get(url);
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        if (data != null && data['reminders'] is List) {
+          return (data['reminders'] as List)
+              .map((e) => Reminder.fromJson(e as Map<String, dynamic>))
+              .toList();
+        }
+        return [];
+      } else {
+        print('Erro ao obter lembretes: ${response.statusCode} - ${response.body}');
+        return [];
+      }
+    } catch (e) {
+      print('Exceção ao obter lembretes: $e');
+      return [];
+    }
+  }
+
+  Future<bool> updateReminder(Reminder reminder) async {
+    if (reminder.id == null) {
+      print('Erro: ID do lembrete é nulo para atualização.');
+      return false;
+    }
+    final url = Uri.parse('$_baseUrl/reminders/${reminder.userId}/${reminder.id}');
+    try {
+      final response = await http.put(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode(reminder.toJson()),
+      );
+      if (response.statusCode == 200) {
+        return true;
+      } else {
+        print('Erro ao atualizar lembrete: ${response.statusCode} - ${response.body}');
+        return false;
+      }
+    } catch (e) {
+      print('Exceção ao atualizar lembrete: $e');
+      return false;
+    }
+  }
+
+  Future<bool> deleteReminder(String userId, int reminderId) async {
+    final url = Uri.parse('$_baseUrl/reminders/$userId/$reminderId');
+    try {
+      final response = await http.delete(url);
+      if (response.statusCode == 200) {
+        return true;
+      } else {
+        print('Erro ao excluir lembrete: ${response.statusCode} - ${response.body}');
+        return false;
+      }
+    } catch (e) {
+      print('Exceção ao excluir lembrete: $e');
       return false;
     }
   }
