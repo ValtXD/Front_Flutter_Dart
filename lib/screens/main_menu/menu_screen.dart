@@ -9,7 +9,8 @@ import 'package:funfono1/models/user.dart'; // Mantido para o modelo de usuário
 import 'package:funfono1/screens/exercises/exercises_menu_screen.dart';
 import 'package:funfono1/screens/main_menu/progress_screen.dart'; // Já existente
 import 'package:funfono1/screens/main_menu/schedule_screen.dart'; // Já existente
-import 'package:funfono1/screens/main_menu/assistant_bot_screen.dart'; // NOVO IMPORT para a tela do bot
+import 'package:funfono1/screens/main_menu/assistant_bot_screen.dart'; // Import da tela do bot
+import 'package:funfono1/screens/main_menu/pronunciation_tips_screen.dart'; // NOVO IMPORT para a tela de dicas
 
 class MenuScreen extends StatefulWidget {
   const MenuScreen({super.key});
@@ -156,7 +157,34 @@ class _MenuScreenState extends State<MenuScreen> {
                     ),
                   ),
                 ),
-                // Você pode adicionar mais botões aqui se quiser outra funcionalidade nesta linha
+
+                // NOVO Botão Dicas
+                GestureDetector(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => PronunciationTipsScreen()),
+                    );
+                  },
+                  child: Container(
+                    width: 120,
+                    height: 120,
+                    margin: const EdgeInsets.symmetric(horizontal: 10),
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.blue, width: 2),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: const [
+                        Icon(Icons.lightbulb_outline, size: 50, color: Colors.blue), // Ícone de lâmpada
+                        SizedBox(height: 10),
+                        Text('Dicas',
+                            style: TextStyle(fontSize: 16, color: Colors.blue)),
+                      ],
+                    ),
+                  ),
+                ),
               ],
             ),
           ],
