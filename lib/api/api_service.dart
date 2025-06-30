@@ -6,6 +6,7 @@ import 'package:funfono1/models/user.dart';
 import 'package:funfono1/models/questionnaire.dart';
 import 'package:funfono1/models/attempt_history.dart'; // NOVO IMPORT
 import 'package:funfono1/models/reminder.dart'; // NOVO IMPORT
+import 'package:funfono1/models/game_result.dart';
 
 import '../models/attempt_data.dart';
 
@@ -361,6 +362,88 @@ class ApiService {
       }
     } catch (e) {
       print('Exceção ao excluir lembrete: $e');
+      return false;
+    }
+  }
+
+  // --- Mini-Game "Palavra Rápida" ---
+
+  Future<String?> generateQuickWord() async {
+    // URL CORRIGIDA para /exercises/quick_word_game/generate_word/index.dart (no backend é só /generate_word)
+    final url = Uri.parse('$_baseUrl/quick_word_game/generate_word');
+    try {
+      final response = await http.get(url);
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        return data['word'] as String?;
+      } else {
+        print('Erro ao gerar palavra do jogo: ${response.statusCode} - ${response.body}');
+        return null;
+      }
+    } catch (e) {
+      print('Exceção ao gerar palavra do jogo: $e');
+      return null;
+    }
+  }
+
+  Future<GameResult?> saveQuickWordGameResult(GameResult result) async {
+    // URL CORRIGIDA para /exercises/quick_word_game/save_result/index.dart (no backend é só /save_result)
+    final url = Uri.parse('$_baseUrl/quick_word_game/save_result');
+    try {
+      final response = await http.post(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode(result.toJson()),
+      );
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> responseBody = json.decode(response.body);
+        return GameResult.fromJson(responseBody['gameResult'] as Map<String, dynamic>);
+      } else {
+        print('Erro ao salvar resultado do jogo: ${response.statusCode} - ${response.body}');
+        return null;
+      }
+    } catch (e) {
+      print('Exceção ao salvar resultado do jogo: $e');
+      return null;
+    }
+  }
+
+  Future<List<GameResult>> getQuickWordGameHistory(String userId) async {
+    // URL CORRIGIDA para /exercises/quick_word_game/:userId/index.dart (no backend é só /:userId)
+    final url = Uri.parse('$_baseUrl/quick_word_game/user/$userId');
+    try {
+      final response = await http.get(url);
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        if (data != null && data['gameResults'] is List) {
+          return (data['gameResults'] as List)
+              .map((e) => GameResult.fromJson(e as Map<String, dynamic>))
+              .toList();
+        }
+        return [];
+      } else {
+        print('Erro ao obter histórico do jogo: ${response.statusCode} - ${response.body}');
+        return [];
+      }
+    } catch (e) {
+      print('Exceção ao obter histórico do jogo: $e');
+      return [];
+    }
+  }
+
+  Future<bool> deleteQuickWordGameResult(String userId, int resultId) async {
+    // URL CORRIGIDA para /exercises/quick_word_game/:userId/:resultId
+    final url = Uri.parse('$_baseUrl/quick_word_game/user/$userId/$resultId');
+    try {
+      final response = await http.delete(url);
+      if (response.statusCode == 200) {
+        return true;
+      } else {
+        print('Erro ao excluir resultado do jogo: ${response.statusCode} - ${response.body}');
+        return false;
+      }
+    } catch (e) {
+      print('Exceção ao excluir resultado do jogo: $e');
       return false;
     }
   }

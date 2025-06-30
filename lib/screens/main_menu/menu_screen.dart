@@ -7,10 +7,11 @@ import 'package:funfono1/models/user.dart'; // Mantido para o modelo de usuário
 
 // Imports para as telas que o menu principal acessa
 import 'package:funfono1/screens/exercises/exercises_menu_screen.dart';
-import 'package:funfono1/screens/main_menu/progress_screen.dart'; // Já existente
-import 'package:funfono1/screens/main_menu/schedule_screen.dart'; // Já existente
+import 'package:funfono1/screens/main_menu/progress_screen.dart';
+import 'package:funfono1/screens/main_menu/schedule_screen.dart';
 import 'package:funfono1/screens/main_menu/assistant_bot_screen.dart'; // Import da tela do bot
-import 'package:funfono1/screens/main_menu/pronunciation_tips_screen.dart'; // NOVO IMPORT para a tela de dicas
+import 'package:funfono1/screens/main_menu/pronunciation_tips_screen.dart'; // Import da tela de dicas
+import 'package:funfono1/screens/mini_games/mini_games_selection_screen.dart'; // NOVO IMPORT para a tela de seleção de mini games
 
 class MenuScreen extends StatefulWidget {
   const MenuScreen({super.key});
@@ -29,7 +30,7 @@ class _MenuScreenState extends State<MenuScreen> {
   }
 
   Future<void> _loadCurrentUser() async {
-    // Usando AuthStateService para carregar o usuário, conforme seu código
+    // Usando AuthStateService para carregar o usuário
     final user = await AuthStateService().getLoggedInUser();
     if (mounted) {
       setState(() {
@@ -43,11 +44,11 @@ class _MenuScreenState extends State<MenuScreen> {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        title: const Text('Menu Principal'), // Título do AppBar
-        centerTitle: true, // Centraliza o título
-        backgroundColor: Colors.blue, // Adicione uma cor para o AppBar
-        foregroundColor: Colors.white, // Cor do texto e ícones no AppBar
-        automaticallyImplyLeading: false, // Remove a seta de voltar se não for necessário
+        title: const Text('Menu Principal'),
+        centerTitle: true,
+        backgroundColor: Colors.blue,
+        foregroundColor: Colors.white,
+        automaticallyImplyLeading: false,
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.symmetric(vertical: 30, horizontal: 16),
@@ -126,7 +127,7 @@ class _MenuScreenState extends State<MenuScreen> {
                 ),
               ],
             ),
-            const SizedBox(height: 20), // Espaçamento para a nova linha de botões
+            const SizedBox(height: 20),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
@@ -158,7 +159,7 @@ class _MenuScreenState extends State<MenuScreen> {
                   ),
                 ),
 
-                // NOVO Botão Dicas
+                // Botão Dicas
                 GestureDetector(
                   onTap: () {
                     Navigator.push(
@@ -177,9 +178,42 @@ class _MenuScreenState extends State<MenuScreen> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: const [
-                        Icon(Icons.lightbulb_outline, size: 50, color: Colors.blue), // Ícone de lâmpada
+                        Icon(Icons.lightbulb_outline, size: 50, color: Colors.blue),
                         SizedBox(height: 10),
                         Text('Dicas',
+                            style: TextStyle(fontSize: 16, color: Colors.blue)),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                // NOVO Botão Mini Games
+                GestureDetector(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const MiniGamesSelectionScreen()),
+                    );
+                  },
+                  child: Container(
+                    width: 120,
+                    height: 120,
+                    margin: const EdgeInsets.symmetric(horizontal: 10),
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.blue, width: 2),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: const [
+                        Icon(Icons.gamepad_outlined, size: 50, color: Colors.blue), // Ícone de gamepad
+                        SizedBox(height: 10),
+                        Text('Mini Games',
                             style: TextStyle(fontSize: 16, color: Colors.blue)),
                       ],
                     ),
@@ -198,12 +232,11 @@ class _MenuScreenState extends State<MenuScreen> {
             MaterialPageRoute(builder: (context) => const AssistantBotScreen()),
           );
         },
-        backgroundColor: Colors.blue, // Cor de fundo do FAB
+        backgroundColor: Colors.blue,
         child: Image.asset(
-          'assets/images/bot_fono.png', // Caminho para sua imagem personalizada
-          width: 40, // Ajuste o tamanho da imagem conforme necessário
-          height: 40, // Ajuste o tamanho da imagem conforme necessário
-          // color: Colors.white, // Opcional: se sua imagem for monocromática e você quiser colorir
+          'assets/images/bot_fono.png',
+          width: 40,
+          height: 40,
         ),
       ),
     );

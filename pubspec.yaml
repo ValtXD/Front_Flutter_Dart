@@ -74,6 +74,9 @@ flutter:
   assets:
     - assets/images/
     - assets/gifs/
+    - assets/rocket.png
+    - assets/meteor.png
+    - assets/explosion.png
   # To add assets to your application, add an assets section, like this:
   # assets:
   #   - images/a_dot_burr.jpeg
