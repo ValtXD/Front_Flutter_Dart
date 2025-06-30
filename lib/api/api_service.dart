@@ -365,4 +365,25 @@ class ApiService {
     }
   }
 
+  // --- Bot de Assistência ---
+  Future<Map<String, dynamic>?> askAssistantBot(String question) async {
+    final url = Uri.parse('$_baseUrl/assistant/ask');
+    try {
+      final response = await http.post(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({'question': question}),
+      );
+      if (response.statusCode == 200) {
+        return json.decode(response.body) as Map<String, dynamic>;
+      } else {
+        print('Erro ao perguntar ao bot: ${response.statusCode} - ${response.body}');
+        return null;
+      }
+    } catch (e) {
+      print('Exceção ao perguntar ao bot: $e');
+      return null;
+    }
+  }
+
 }

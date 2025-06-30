@@ -1,11 +1,15 @@
-// lib/screens/main_menu/menu_screen.dart (trecho relevante)
+// lib/screens/main_menu/menu_screen.dart
 
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart'; // Import necessário para usar Provider
+import 'package:funfono1/services/auth_state_service.dart'; // Mantido, assumindo que AuthStateService é seu provedor de usuário
+import 'package:funfono1/models/user.dart'; // Mantido para o modelo de usuário
+
+// Imports para as telas que o menu principal acessa
 import 'package:funfono1/screens/exercises/exercises_menu_screen.dart';
-import 'package:funfono1/services/auth_state_service.dart';
-import 'package:funfono1/models/user.dart';
-import 'package:funfono1/screens/main_menu/progress_screen.dart';
-import 'package:funfono1/screens/main_menu/schedule_screen.dart'; // NOVO IMPORT
+import 'package:funfono1/screens/main_menu/progress_screen.dart'; // Já existente
+import 'package:funfono1/screens/main_menu/schedule_screen.dart'; // Já existente
+import 'package:funfono1/screens/main_menu/assistant_bot_screen.dart'; // NOVO IMPORT para a tela do bot
 
 class MenuScreen extends StatefulWidget {
   const MenuScreen({super.key});
@@ -24,6 +28,7 @@ class _MenuScreenState extends State<MenuScreen> {
   }
 
   Future<void> _loadCurrentUser() async {
+    // Usando AuthStateService para carregar o usuário, conforme seu código
     final user = await AuthStateService().getLoggedInUser();
     if (mounted) {
       setState(() {
@@ -37,9 +42,11 @@ class _MenuScreenState extends State<MenuScreen> {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        title: const Text('Menu Principal'),
-        centerTitle: true,
-        automaticallyImplyLeading: false,
+        title: const Text('Menu Principal'), // Título do AppBar
+        centerTitle: true, // Centraliza o título
+        backgroundColor: Colors.blue, // Adicione uma cor para o AppBar
+        foregroundColor: Colors.white, // Cor do texto e ícones no AppBar
+        automaticallyImplyLeading: false, // Remove a seta de voltar se não for necessário
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.symmetric(vertical: 30, horizontal: 16),
@@ -122,12 +129,12 @@ class _MenuScreenState extends State<MenuScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                // NOVO Botão Cronograma
+                // Botão Cronograma
                 GestureDetector(
                   onTap: () {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => const ScheduleScreen()), // NAVEGA PARA A TELA DE CRONOGRAMA
+                      MaterialPageRoute(builder: (context) => const ScheduleScreen()),
                     );
                   },
                   child: Container(
@@ -141,7 +148,7 @@ class _MenuScreenState extends State<MenuScreen> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: const [
-                        Icon(Icons.calendar_today, size: 50, color: Colors.blue), // Ícone de calendário
+                        Icon(Icons.calendar_today, size: 50, color: Colors.blue),
                         SizedBox(height: 10),
                         Text('Cronograma',
                             style: TextStyle(fontSize: 16, color: Colors.blue)),
@@ -153,6 +160,22 @@ class _MenuScreenState extends State<MenuScreen> {
               ],
             ),
           ],
+        ),
+      ),
+      // FloatingActionButton para o Assistente Bot no canto inferior direito
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const AssistantBotScreen()),
+          );
+        },
+        backgroundColor: Colors.blue, // Cor de fundo do FAB
+        child: Image.asset(
+          'assets/images/bot_fono.png', // Caminho para sua imagem personalizada
+          width: 40, // Ajuste o tamanho da imagem conforme necessário
+          height: 40, // Ajuste o tamanho da imagem conforme necessário
+          // color: Colors.white, // Opcional: se sua imagem for monocromática e você quiser colorir
         ),
       ),
     );
