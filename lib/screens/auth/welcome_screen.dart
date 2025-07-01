@@ -14,8 +14,8 @@ class WelcomeScreen extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               // Imagem do logo (você precisará adicionar ao pubspec.yaml e à pasta assets)
-              // Ex: Image.asset('assets/logo.png', height: 200),
-              const Icon(Icons.mic, size: 100, color: Colors.blue), // Placeholder para o logo
+              Image.asset('assets/images/funfono_logo.png', height: 200),
+              //const Icon(Icons.mic, size: 100, color: Colors.blue), // Placeholder para o logo
               const SizedBox(height: 30),
               const Text(
                 'Bem-vindo ao FunFono!',

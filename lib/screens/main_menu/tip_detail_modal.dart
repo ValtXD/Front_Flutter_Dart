@@ -65,11 +65,11 @@ class _TipDetailModalState extends State<TipDetailModal> {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 10.0),
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.start, // <<-- Adicione ou confirme esta linha
               children: widget.tip.tips.map((tipDetail) => Padding(
-                padding: const EdgeInsets.only(bottom: 8.0), // Espaçamento entre as dicas
+                padding: const EdgeInsets.only(bottom: 8.0),
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.start, // <<-- E esta linha também
                   children: [
                     Text(
                       tipDetail['title']!,
