@@ -366,7 +366,7 @@ class _QuickWordGamePlayScreenState extends State<QuickWordGamePlayScreen> {
       );
     }
 
-    final evaluationResult = await apiService.evaluatePronunciation(
+    final evaluationResult = await apiService.evaluateQuickWordPronunciation(
       widget.userId,
       _currentWord!,
       _currentWord![0], // Assumindo que o som a ser avaliado é a primeira letra da palavra

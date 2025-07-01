@@ -448,6 +448,34 @@ class ApiService {
     }
   }
 
+  // NOVO MÉTODO: Avaliação de pronúncia para o mini-game
+  Future<Map<String, dynamic>?> evaluateQuickWordPronunciation(
+      String userId, String word, String sound, String userSpeechBase64) async {
+    // URL DEDICADA PARA O MINI-GAME
+    final url = Uri.parse('$_baseUrl/quick_word_game/evaluate_pronunciation');
+    try {
+      final response = await http.post(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({
+          'user_id': userId,
+          'palavra': word,
+          'som': sound,
+          'fala_usuario_audio_base64': userSpeechBase64,
+        }),
+      );
+      if (response.statusCode == 200) {
+        return json.decode(response.body);
+      } else {
+        print('Erro ao avaliar pronúncia do mini-game: ${response.statusCode} - ${response.body}');
+        return null;
+      }
+    } catch (e) {
+      print('Exceção ao avaliar pronúncia do mini-game: $e');
+      return null;
+    }
+  }
+
   // --- Bot de Assistência ---
   Future<Map<String, dynamic>?> askAssistantBot(String question) async {
     final url = Uri.parse('$_baseUrl/assistant/ask');

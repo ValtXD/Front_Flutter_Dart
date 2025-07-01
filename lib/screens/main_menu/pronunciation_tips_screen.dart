@@ -1,11 +1,26 @@
-// lib/screens/main_menu/pronunciation_tips_screen.dart
-
 import 'package:flutter/material.dart';
 import 'package:funfono1/models/pronunciation_tip.dart';
 import 'package:funfono1/screens/main_menu/tip_detail_modal.dart';
+import 'package:flutter_tts/flutter_tts.dart'; // Importe o flutter_tts
 
 class PronunciationTipsScreen extends StatelessWidget {
   PronunciationTipsScreen({super.key});
+
+  // Crie uma única instância de FlutterTts para ser reutilizada
+  final FlutterTts flutterTts = FlutterTts();
+
+  // Configuração inicial do TTS
+  void _initializeTts() async {
+    await flutterTts.setLanguage("pt-BR"); // Define o idioma para Português (Brasil)
+    await flutterTts.setSpeechRate(0.5); // Define a velocidade da fala (0.0 a 1.0)
+    await flutterTts.setVolume(1.0); // Define o volume (0.0 a 1.0)
+    await flutterTts.setPitch(1.0); // Define o tom (0.5 a 2.0)
+  }
+
+  // Função para falar o texto
+  Future<void> _speak(String text) async {
+    await flutterTts.speak(text);
+  }
 
   // LISTA COMPLETA DE DICAS (TODAS VOGAIS, CONSOANTES E COMBINAÇÕES)
   final List<PronunciationTip> _allTips = [
@@ -13,7 +28,7 @@ class PronunciationTipsScreen extends StatelessWidget {
     PronunciationTip(
       sound: 'A',
       type: 'Vogal',
-      gifAssetPath: 'assets/gifs/a_vowel.gif',
+      gifAssetPath: 'assets/gifs/a_vowel.jpg',
       tips: const [
         {'title': 'Boca Aberta', 'description': 'Abra bem a boca, língua relaxada no fundo. Ex: "Casa"'},
       ],
@@ -21,7 +36,7 @@ class PronunciationTipsScreen extends StatelessWidget {
     PronunciationTip(
       sound: 'E',
       type: 'Vogal',
-      gifAssetPath: 'assets/gifs/e_vowel.gif',
+      gifAssetPath: 'assets/gifs/e_vowel.jpg',
       tips: const [
         {'title': 'Semiaberto (É)', 'description': 'Boca semiaberta, lábios esticados. Ex: "Pé"'},
         {'title': 'Fechado (Ê)', 'description': 'Boca mais fechada, língua elevada. Ex: "Mesa"'},
@@ -30,7 +45,7 @@ class PronunciationTipsScreen extends StatelessWidget {
     PronunciationTip(
       sound: 'I',
       type: 'Vogal',
-      gifAssetPath: 'assets/gifs/i_vowel.gif',
+      gifAssetPath: 'assets/gifs/i_vowel.jpg',
       tips: const [
         {'title': 'Língua Alta', 'description': 'Lábios esticados, língua no céu da boca. Ex: "Dia"'},
       ],
@@ -38,7 +53,7 @@ class PronunciationTipsScreen extends StatelessWidget {
     PronunciationTip(
       sound: 'O',
       type: 'Vogal',
-      gifAssetPath: 'assets/gifs/o_vowel.gif',
+      gifAssetPath: 'assets/gifs/o_vowel.jpg',
       tips: const [
         {'title': 'Semiaberto (Ó)', 'description': 'Lábios arredondados. Ex: "Avó"'},
         {'title': 'Fechado (Ô)', 'description': 'Lábios mais fechados. Ex: "Avô"'},
@@ -47,7 +62,7 @@ class PronunciationTipsScreen extends StatelessWidget {
     PronunciationTip(
       sound: 'U',
       type: 'Vogal',
-      gifAssetPath: 'assets/gifs/u_vowel.gif',
+      gifAssetPath: 'assets/gifs/u_vowel.jpg',
       tips: const [
         {'title': 'Boca Arredondada', 'description': 'Lábios projetados para frente. Ex: "Lua"'},
       ],
@@ -57,7 +72,7 @@ class PronunciationTipsScreen extends StatelessWidget {
     PronunciationTip(
       sound: 'B',
       type: 'Consoante',
-      gifAssetPath: 'assets/gifs/b_consonant.gif',
+      gifAssetPath: 'assets/gifs/b_consonant.jpg',
       tips: const [
         {'title': 'Lábios Juntos', 'description': 'Explosão com vibração. Ex: "Bola"'},
       ],
@@ -65,7 +80,7 @@ class PronunciationTipsScreen extends StatelessWidget {
     PronunciationTip(
       sound: 'C',
       type: 'Consoante',
-      gifAssetPath: 'assets/gifs/c_consonant.gif',
+      gifAssetPath: 'assets/gifs/c_consonant.jpg',
       tips: const [
         {'title': 'C (Forte)', 'description': 'Som de "K" (antes de A, O, U). Ex: "Casa"'},
         {'title': 'C (Suave)', 'description': 'Som de "S" (antes de E, I). Ex: "Cedo"'},
@@ -74,7 +89,7 @@ class PronunciationTipsScreen extends StatelessWidget {
     PronunciationTip(
       sound: 'D',
       type: 'Consoante',
-      gifAssetPath: 'assets/gifs/d_consonant.gif',
+      gifAssetPath: 'assets/gifs/d_consonant.jpg',
       tips: const [
         {'title': 'Língua nos Dentes', 'description': 'Toque a língua atrás dos dentes. Ex: "Dado"'},
       ],
@@ -82,7 +97,7 @@ class PronunciationTipsScreen extends StatelessWidget {
     PronunciationTip(
       sound: 'F',
       type: 'Consoante',
-      gifAssetPath: 'assets/gifs/f_consonant.gif',
+      gifAssetPath: 'assets/gifs/f_consonant.jpg',
       tips: const [
         {'title': 'Lábio e Dentes', 'description': 'Sopro contínuo. Ex: "Faca"'},
       ],
@@ -90,7 +105,7 @@ class PronunciationTipsScreen extends StatelessWidget {
     PronunciationTip(
       sound: 'G',
       type: 'Consoante',
-      gifAssetPath: 'assets/gifs/g_consonant.gif',
+      gifAssetPath: 'assets/gifs/g_consonant.jpg',
       tips: const [
         {'title': 'G (Forte)', 'description': 'Som gutural (antes de A, O, U). Ex: "Gato"'},
         {'title': 'G (Suave)', 'description': 'Som de "J" (antes de E, I). Ex: "Gelo"'},
@@ -99,7 +114,7 @@ class PronunciationTipsScreen extends StatelessWidget {
     PronunciationTip(
       sound: 'H',
       type: 'Consoante',
-      gifAssetPath: 'assets/gifs/h_consonant.gif',
+      gifAssetPath: 'assets/gifs/h_consonant.jpg',
       tips: const [
         {'title': 'Mudo', 'description': 'Geralmente não tem som. Ex: "Hora"'},
       ],
@@ -107,7 +122,7 @@ class PronunciationTipsScreen extends StatelessWidget {
     PronunciationTip(
       sound: 'J',
       type: 'Consoante',
-      gifAssetPath: 'assets/gifs/j_consonant.gif',
+      gifAssetPath: 'assets/gifs/j_consonant.jpg',
       tips: const [
         {'title': 'Som de "J"', 'description': 'Língua no céu da boca. Ex: "Janela"'},
       ],
@@ -115,7 +130,7 @@ class PronunciationTipsScreen extends StatelessWidget {
     PronunciationTip(
       sound: 'L',
       type: 'Consoante',
-      gifAssetPath: 'assets/gifs/l_consonant.gif',
+      gifAssetPath: 'assets/gifs/l_consonant.jpg',
       tips: const [
         {'title': 'L Claro', 'description': 'Toque a língua atrás dos dentes. Ex: "Lua"'},
         {'title': 'L Escuro', 'description': 'Som de "U" no final. Ex: "Brasil"'},
@@ -124,7 +139,7 @@ class PronunciationTipsScreen extends StatelessWidget {
     PronunciationTip(
       sound: 'M',
       type: 'Consoante',
-      gifAssetPath: 'assets/gifs/m_consonant.gif',
+      gifAssetPath: 'assets/gifs/m_consonant.jpg',
       tips: const [
         {'title': 'Som Nasal', 'description': 'Lábios fechados. Ex: "Mão"'},
       ],
@@ -132,7 +147,7 @@ class PronunciationTipsScreen extends StatelessWidget {
     PronunciationTip(
       sound: 'N',
       type: 'Consoante',
-      gifAssetPath: 'assets/gifs/n_consonant.gif',
+      gifAssetPath: 'assets/gifs/n_consonant.jpg',
       tips: const [
         {'title': 'Som Nasal', 'description': 'Língua no céu da boca. Ex: "Nariz"'},
       ],
@@ -140,7 +155,7 @@ class PronunciationTipsScreen extends StatelessWidget {
     PronunciationTip(
       sound: 'P',
       type: 'Consoante',
-      gifAssetPath: 'assets/gifs/p_consonant.gif',
+      gifAssetPath: 'assets/gifs/p_consonant.jpg',
       tips: const [
         {'title': 'Lábios Juntos', 'description': 'Explosão sem vibração. Ex: "Pato"'},
       ],
@@ -148,7 +163,7 @@ class PronunciationTipsScreen extends StatelessWidget {
     PronunciationTip(
       sound: 'Q',
       type: 'Consoante',
-      gifAssetPath: 'assets/gifs/q_consonant.gif',
+      gifAssetPath: 'assets/gifs/q_consonant.jpg',
       tips: const [
         {'title': 'Q (com U)', 'description': 'Sempre acompanhado de U. Ex: "Queijo"'},
       ],
@@ -156,7 +171,7 @@ class PronunciationTipsScreen extends StatelessWidget {
     PronunciationTip(
       sound: 'R',
       type: 'Consoante',
-      gifAssetPath: 'assets/gifs/r_consonant.gif',
+      gifAssetPath: 'assets/gifs/r_consonant.jpg',
       tips: const [
         {'title': 'R Forte', 'description': 'Vibração (início/palavras com RR). Ex: "Rato"'},
         {'title': 'R Fraco', 'description': 'Toque leve (meio/fim). Ex: "Cara"'},
@@ -165,7 +180,7 @@ class PronunciationTipsScreen extends StatelessWidget {
     PronunciationTip(
       sound: 'S',
       type: 'Consoante',
-      gifAssetPath: 'assets/gifs/s_consonant.gif',
+      gifAssetPath: 'assets/gifs/s_consonant.jpg',
       tips: const [
         {'title': 'S (Forte)', 'description': 'Som de "SS". Ex: "Passo"'},
         {'title': 'S (Suave)', 'description': 'Som de "Z". Ex: "Casa"'},
@@ -174,7 +189,7 @@ class PronunciationTipsScreen extends StatelessWidget {
     PronunciationTip(
       sound: 'T',
       type: 'Consoante',
-      gifAssetPath: 'assets/gifs/t_consonant.gif',
+      gifAssetPath: 'assets/gifs/t_consonant.jpg',
       tips: const [
         {'title': 'Língua nos Dentes', 'description': 'Toque a língua atrás dos dentes. Ex: "Tatu"'},
       ],
@@ -182,7 +197,7 @@ class PronunciationTipsScreen extends StatelessWidget {
     PronunciationTip(
       sound: 'V',
       type: 'Consoante',
-      gifAssetPath: 'assets/gifs/v_consonant.gif',
+      gifAssetPath: 'assets/gifs/v_consonant.jpg',
       tips: const [
         {'title': 'Lábio e Dentes', 'description': 'Com vibração. Ex: "Vaca"'},
       ],
@@ -190,7 +205,7 @@ class PronunciationTipsScreen extends StatelessWidget {
     PronunciationTip(
       sound: 'X',
       type: 'Consoante',
-      gifAssetPath: 'assets/gifs/x_consonant.gif',
+      gifAssetPath: 'assets/gifs/x_consonant.jpg',
       tips: const [
         {'title': 'X (CH)', 'description': 'Ex: "Xícara"'},
         {'title': 'X (Z)', 'description': 'Ex: "Exame"'},
@@ -200,7 +215,7 @@ class PronunciationTipsScreen extends StatelessWidget {
     PronunciationTip(
       sound: 'Z',
       type: 'Consoante',
-      gifAssetPath: 'assets/gifs/z_consonant.gif',
+      gifAssetPath: 'assets/gifs/z_consonant.jpg',
       tips: const [
         {'title': 'Som de "Z"', 'description': 'Com vibração. Ex: "Zebra"'},
       ],
@@ -210,7 +225,7 @@ class PronunciationTipsScreen extends StatelessWidget {
     PronunciationTip(
       sound: 'CH',
       type: 'Combinação',
-      gifAssetPath: 'assets/gifs/ch_combination.gif',
+      gifAssetPath: 'assets/gifs/ch_combination.jpg',
       tips: const [
         {'title': 'Som de "CH"', 'description': 'Lábios para frente. Ex: "Chave"'},
       ],
@@ -218,7 +233,7 @@ class PronunciationTipsScreen extends StatelessWidget {
     PronunciationTip(
       sound: 'LH',
       type: 'Combinação',
-      gifAssetPath: 'assets/gifs/lh_combination.gif',
+      gifAssetPath: 'assets/gifs/lh_combination.jpg',
       tips: const [
         {'title': 'Som de "LH"', 'description': 'Língua no céu da boca. Ex: "Folha"'},
       ],
@@ -226,7 +241,7 @@ class PronunciationTipsScreen extends StatelessWidget {
     PronunciationTip(
       sound: 'NH',
       type: 'Combinação',
-      gifAssetPath: 'assets/gifs/nh_combination.gif',
+      gifAssetPath: 'assets/gifs/nh_combination.jpg',
       tips: const [
         {'title': 'Som de "NH"', 'description': 'Som nasal. Ex: "Banho"'},
       ],
@@ -234,7 +249,7 @@ class PronunciationTipsScreen extends StatelessWidget {
     PronunciationTip(
       sound: 'QU',
       type: 'Combinação',
-      gifAssetPath: 'assets/gifs/qu_combination.gif',
+      gifAssetPath: 'assets/gifs/qu_combination.jpg',
       tips: const [
         {'title': 'QU (com U mudo)', 'description': 'Ex: "Queijo"'},
         {'title': 'QU (com U pronunciado)', 'description': 'Ex: "Quase"'},
@@ -243,7 +258,7 @@ class PronunciationTipsScreen extends StatelessWidget {
     PronunciationTip(
       sound: 'GU',
       type: 'Combinação',
-      gifAssetPath: 'assets/gifs/gu_combination.gif',
+      gifAssetPath: 'assets/gifs/gu_combination.jpg',
       tips: const [
         {'title': 'GU (com U mudo)', 'description': 'Ex: "Guitarra"'},
         {'title': 'GU (com U pronunciado)', 'description': 'Ex: "Água"'},
@@ -252,7 +267,7 @@ class PronunciationTipsScreen extends StatelessWidget {
     PronunciationTip(
       sound: 'SS',
       type: 'Combinação',
-      gifAssetPath: 'assets/gifs/ss_combination.gif',
+      gifAssetPath: 'assets/gifs/ss_combination.jpg',
       tips: const [
         {'title': 'SS (Forte)', 'description': 'Som de "S" marcado. Ex: "Passo"'},
       ],
@@ -260,7 +275,7 @@ class PronunciationTipsScreen extends StatelessWidget {
     PronunciationTip(
       sound: 'RR',
       type: 'Combinação',
-      gifAssetPath: 'assets/gifs/rr_combination.gif',
+      gifAssetPath: 'assets/gifs/rr_combination.jpg',
       tips: const [
         {'title': 'RR (Forte)', 'description': 'Vibração acentuada. Ex: "Carro"'},
       ],
@@ -268,25 +283,19 @@ class PronunciationTipsScreen extends StatelessWidget {
     PronunciationTip(
       sound: 'SC',
       type: 'Combinação',
-      gifAssetPath: 'assets/gifs/sc_combination.gif',
+      gifAssetPath: 'assets/gifs/sc_combination.jpg',
       tips: const [
         {'title': 'SC (com som de S)', 'description': 'Ex: "Nascer"'},
         {'title': 'SC (com som de SK)', 'description': 'Ex: "Piscina"'},
-      ],
-    ),
-    PronunciationTip(
-      sound: 'XC',
-      type: 'Combinação',
-      gifAssetPath: 'assets/gifs/xc_combination.gif',
-      tips: const [
-        {'title': 'XC (com som de S)', 'description': 'Ex: "Exceção"'},
-        {'title': 'XC (com som de X)', 'description': 'Ex: "Excelente"'},
       ],
     ),
   ];
 
   @override
   Widget build(BuildContext context) {
+    // Inicializa o TTS quando o widget é construído pela primeira vez
+    _initializeTts();
+
     final vowels = _allTips.where((tip) => tip.type == 'Vogal').toList();
     final consonants = _allTips.where((tip) => tip.type == 'Consoante').toList();
     final combinations = _allTips.where((tip) => tip.type == 'Combinação').toList();
@@ -303,7 +312,7 @@ class PronunciationTipsScreen extends StatelessWidget {
           children: [
             _buildCategory('Vogais', vowels, context),
             _buildCategory('Consoantes', consonants, context),
-            _buildCategory('Combinações', combinations, context),
+            _buildCategory('Encontros Consonantais', combinations, context),
           ],
         ),
       ),
@@ -312,7 +321,6 @@ class PronunciationTipsScreen extends StatelessWidget {
 
   Widget _buildCategory(String title, List<PronunciationTip> tips, BuildContext context) {
     tips.sort((a, b) => a.sound.compareTo(b.sound));
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -338,7 +346,10 @@ class PronunciationTipsScreen extends StatelessWidget {
 
   Widget _buildSoundButton(PronunciationTip tip, BuildContext context) {
     return GestureDetector(
-      onTap: () => _showTipDetail(tip, context),
+      onTap: () {
+        _speak(tip.sound); // Toca o texto da pronúncia usando TTS
+        _showTipDetail(tip, context);
+      },
       child: Container(
         width: 60,
         height: 60,
@@ -364,7 +375,7 @@ class PronunciationTipsScreen extends StatelessWidget {
   void _showTipDetail(PronunciationTip tip, BuildContext context) {
     showDialog(
       context: context,
-      builder: (context) => TipDetailModal(tip: tip),
+      builder: (context) => TipDetailModal(tip: tip, flutterTts: flutterTts), // Passe a instância do flutterTts para o modal
     );
   }
 }

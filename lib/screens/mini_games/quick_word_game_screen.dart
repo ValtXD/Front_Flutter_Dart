@@ -130,14 +130,14 @@ class _QuickWordGameScreenState extends State<QuickWordGameScreen> {
   Widget build(BuildContext context) {
     if (_isLoading) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Palavra Rápida')),
+        appBar: AppBar(title: const Text('Foguete da Pronúncia')),
         body: const Center(child: CircularProgressIndicator()),
       );
     }
 
     if (_currentUser == null) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Palavra Rápida')),
+        appBar: AppBar(title: const Text('Foguete da Pronúncia')),
         body: const Center(
           child: Text('Por favor, faça login para jogar.'),
         ),
