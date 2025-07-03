@@ -11,8 +11,9 @@ import 'package:funfono1/models/game_result.dart';
 import '../models/attempt_data.dart';
 
 class ApiService {
-  static const String _baseUrl = 'http://192.168.0.8:8080/api'; // Certifique-se de que este IP esteja correto
-
+  static const String _baseUrl = 'http://192.168.0.9:8080/api'; // Certifique-se de que este IP esteja correto
+  //static const String _baseUrl = 'http://192.168.188.76:8080/api';
+  // --- 10.205.6.59 --- Ufam --- ICOMP2-ALUNOS
   // --- Rotas de Autenticação ---
 
   Future<User?> registerUser(String fullName, String email, String password, String phone, bool isInTherapy) async {

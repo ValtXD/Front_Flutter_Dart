@@ -11,6 +11,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:funfono1/api/api_service.dart';
 import 'package:funfono1/models/game_result.dart';
+import 'package:audioplayers/audioplayers.dart';
 
 class QuickWordGamePlayScreen extends StatefulWidget {
   final String userId;
@@ -23,8 +24,8 @@ class QuickWordGamePlayScreen extends StatefulWidget {
 class _QuickWordGamePlayScreenState extends State<QuickWordGamePlayScreen> {
   // Game state
   int _score = 0;
-  int _wordsCompleted = 0; // Quantidade de palavras pronunciadas (sucesso ou falha)
-  static const int _maxWordsToPronounce = 10; // 1000 pontos / 100 pontos por palavra = 10 palavras
+  int _wordsCompleted = 0;
+  static const int _maxWordsToPronounce = 10;
   bool _isGameOver = false;
   String? _currentWord;
   String _gameMessage = 'Prepare-se para decolar!';
@@ -32,20 +33,20 @@ class _QuickWordGamePlayScreenState extends State<QuickWordGamePlayScreen> {
   final List<String> _incorrectWords = [];
 
   // Game phases
-  bool _isPronunciationPhase = false; // Indica se o jogo está na fase de pronúncia
-  int _lastPronunciationScoreGate = 0; // Controla qual gate de 100 pontos foi alcançado
+  bool _isPronunciationPhase = false;
+  int _lastPronunciationScoreGate = 0;
 
   // Rocket character
-  double _rocketY = 0.0; // Y será o centro vertical da tela (0.0 é o centro)
+  double _rocketY = 0.0;
 
   // Lasers
   bool _isShooting = false;
   final List<Map<String, double>> _lasers = [];
-  Timer? _laserShootTimer; // Timer para disparo automático de laser
+  Timer? _laserShootTimer;
 
   // Meteors
   final List<Map<String, dynamic>> _meteors = [];
-  static const double _meteorSpeed = 0.015; // Velocidade dos meteoros
+  static const double _meteorSpeed = 0.015;
   Timer? _meteorTimer;
 
   // Game loop timer
@@ -62,25 +63,58 @@ class _QuickWordGamePlayScreenState extends State<QuickWordGamePlayScreen> {
   bool _showSuccess = false;
   Timer? _successTimer;
 
+  // Audio Players
+  late AudioPlayer _backgroundMusicPlayer;
+  late AudioPlayer _sfxPlayer;
+  late AudioCache _audioCache; // AudioCache ainda útil para precarregar, mesmo que não toque tudo
+
   @override
   void initState() {
     super.initState();
+    print('DEBUG: initState chamado.');
     _audioRecorder = AudioRecorder();
+    _initializeAudioPlayers();
     _requestPermissionsAndStartGame();
+  }
+
+  void _initializeAudioPlayers() {
+    _backgroundMusicPlayer = AudioPlayer();
+    _sfxPlayer = AudioPlayer();
+    _audioCache = AudioCache(prefix: 'assets/audio/');
+
+    _backgroundMusicPlayer.setReleaseMode(ReleaseMode.loop);
+    _backgroundMusicPlayer.setVolume(0.5);
+    _sfxPlayer.setVolume(0.8);
+    _sfxPlayer.setReleaseMode(ReleaseMode.stop);
+
+    _audioCache.loadAll([
+      'background_music.mp3', // Música de fundo
+      'laser_shoot.mp3', // Apenas para pre-carga, não será tocado
+      'explosion.mp3',   // Apenas para pre-carga, não será tocado
+      'meteor_hit.mp3',  // Apenas para pre-carga, não será tocado
+    ]).then((_) {
+      print('DEBUG: Sons pré-carregados com sucesso!');
+    }).catchError((e) {
+      print('ERRO: Falha ao pré-carregar sons: $e');
+    });
   }
 
   @override
   void dispose() {
+    print('DEBUG: dispose chamado.');
     _gameLoopTimer?.cancel();
     _meteorTimer?.cancel();
     _laserShootTimer?.cancel();
     _explosionTimer?.cancel();
     _successTimer?.cancel();
     _audioRecorder.dispose();
+    _backgroundMusicPlayer.dispose();
+    _sfxPlayer.dispose();
     super.dispose();
   }
 
   Future<void> _requestPermissionsAndStartGame() async {
+    print('DEBUG: _requestPermissionsAndStartGame chamado.');
     final microphoneStatus = await Permission.microphone.request();
     if (!microphoneStatus.isGranted) {
       if (mounted) {
@@ -95,6 +129,7 @@ class _QuickWordGamePlayScreenState extends State<QuickWordGamePlayScreen> {
   }
 
   void _startGame() {
+    print('DEBUG: _startGame chamado. Resetando o jogo.');
     setState(() {
       _score = 0;
       _wordsCompleted = 0;
@@ -102,7 +137,7 @@ class _QuickWordGamePlayScreenState extends State<QuickWordGamePlayScreen> {
       _isPronunciationPhase = false;
       _lastPronunciationScoreGate = 0;
       _gameMessage = 'Desvie dos meteoros e atire!';
-      _rocketY = 0.0; // Posição Y centralizada
+      _rocketY = 0.0;
       _meteors.clear();
       _lasers.clear();
       _correctWords.clear();
@@ -110,6 +145,8 @@ class _QuickWordGamePlayScreenState extends State<QuickWordGamePlayScreen> {
       _showExplosion = false;
       _showSuccess = false;
     });
+
+    _backgroundMusicPlayer.play(AssetSource('audio/background_music.mp3'));
 
     _gameLoopTimer = Timer.periodic(const Duration(milliseconds: 16), (timer) {
       if (!_isGameOver && !_isPronunciationPhase) {
@@ -131,6 +168,7 @@ class _QuickWordGamePlayScreenState extends State<QuickWordGamePlayScreen> {
   }
 
   void _startAutoLaserShoot() {
+    print('DEBUG: _startAutoLaserShoot chamado.');
     _laserShootTimer?.cancel();
     _laserShootTimer = Timer.periodic(const Duration(milliseconds: 700), (timer) {
       if (!_isGameOver && !_isPronunciationPhase) {
@@ -143,7 +181,6 @@ class _QuickWordGamePlayScreenState extends State<QuickWordGamePlayScreen> {
 
   void _updateGame() {
     setState(() {
-      // Laser movement - Iterar em reverso para remoção segura
       for (int i = _lasers.length - 1; i >= 0; i--) {
         _lasers[i]['x'] = _lasers[i]['x']! + 0.05;
         if (_lasers[i]['x']! > 1.5) {
@@ -151,12 +188,10 @@ class _QuickWordGamePlayScreenState extends State<QuickWordGamePlayScreen> {
         }
       }
 
-      // Meteor movement and collision - Iterar em reverso para remoção segura
       for (int i = _meteors.length - 1; i >= 0; i--) {
         final meteor = _meteors[i];
         meteor['x'] = meteor['x'] - meteor['speed'];
 
-        // Rocket-meteor collision
         final rocketXLeft = -0.7;
         final rocketXRight = -0.5;
         final rocketYTop = _rocketY - 0.1;
@@ -171,11 +206,11 @@ class _QuickWordGamePlayScreenState extends State<QuickWordGamePlayScreen> {
             rocketXLeft < meteorXRight &&
             rocketYBottom > meteorYTop &&
             rocketYTop < meteorYBottom) {
+          print('DEBUG: Colisão detectada! Chamando _explodeRocket.');
           _explodeRocket('Foguete atingido! Fim de jogo.');
           return;
         }
 
-        // Laser-meteor collision - Iterar em reverso para remoção segura de lasers
         for (int j = _lasers.length - 1; j >= 0; j--) {
           final laser = _lasers[j];
           final laserX = laser['x'];
@@ -185,11 +220,13 @@ class _QuickWordGamePlayScreenState extends State<QuickWordGamePlayScreen> {
               laserX < meteorXRight &&
               laserY! > meteorYTop &&
               laserY < meteorYBottom) {
-            _meteors.removeAt(i); // Remove o meteoro
-            _lasers.removeAt(j); // Remove o laser
-            _score += 10; // Ganha 10 pontos por meteoro destruído
+            print('DEBUG: Laser atingiu meteoro. Pontos: +10.');
+            // _sfxPlayer.play(AssetSource('audio/meteor_hit.mp3')); // REMOVIDO: Som de meteoro atingido
+            _meteors.removeAt(i);
+            _lasers.removeAt(j);
+            _score += 10;
             _showSuccessEffect();
-            break; // Sai do loop de lasers para este meteoro, pois ele foi destruído
+            break;
           }
         }
 
@@ -198,14 +235,14 @@ class _QuickWordGamePlayScreenState extends State<QuickWordGamePlayScreen> {
         }
       }
 
-      // Verifica gate de pontuação para pronúncia
       if (!_isPronunciationPhase && _score >= (_lastPronunciationScoreGate + 100) && _score < 1000) {
+        print('DEBUG: Gate de pontuação atingido ($_score). Chamando _enterPronunciationPhase.');
         _lastPronunciationScoreGate = (_score ~/ 100) * 100;
         _enterPronunciationPhase();
       }
 
-      // Verifica pontuação máxima
       if (_score >= 1000 && !_isPronunciationPhase && !_isGameOver) {
+        print('DEBUG: Pontuação máxima atingida ($_score). Chamando _gameOver (Vitória).');
         _gameOver('Parabéns! Você alcançou a pontuação máxima!', win: true);
       }
     });
@@ -223,6 +260,8 @@ class _QuickWordGamePlayScreenState extends State<QuickWordGamePlayScreen> {
 
   void _shootLaser() {
     if (_isGameOver || _isShooting || _isPronunciationPhase) return;
+    print('DEBUG: _shootLaser chamado.');
+    // _sfxPlayer.play(AssetSource('audio/laser_shoot.mp3')); // REMOVIDO: Som de laser
     setState(() {
       _lasers.add({
         'x': -0.5,
@@ -237,9 +276,12 @@ class _QuickWordGamePlayScreenState extends State<QuickWordGamePlayScreen> {
 
   void _explodeRocket(String message) {
     if (_isGameOver) return;
+    print('DEBUG: _explodeRocket chamado com mensagem: $message');
+    // _sfxPlayer.play(AssetSource('audio/explosion.mp3')); // REMOVIDO: Som de explosão
+    _backgroundMusicPlayer.stop();
     setState(() {
       _showExplosion = true;
-      _isGameOver = true;
+      //_isGameOver = true;
       _gameMessage = message;
     });
     _explosionTimer = Timer(const Duration(seconds: 2), () {
@@ -260,6 +302,8 @@ class _QuickWordGamePlayScreenState extends State<QuickWordGamePlayScreen> {
   }
 
   Future<void> _enterPronunciationPhase() async {
+    print('DEBUG: _enterPronunciationPhase chamado. Pausando jogo.');
+    _backgroundMusicPlayer.pause();
     setState(() {
       _isPronunciationPhase = true;
       _gameMessage = 'PRONUNCIE A PALAVRA PARA GANHAR COMBUSTÍVEL!';
@@ -270,18 +314,22 @@ class _QuickWordGamePlayScreenState extends State<QuickWordGamePlayScreen> {
     _laserShootTimer?.cancel();
 
     final apiService = Provider.of<ApiService>(context, listen: false);
+    print('DEBUG: Gerando nova palavra para pronúncia...');
     final word = await apiService.generateQuickWord();
     if (word != null && word.isNotEmpty) {
       setState(() {
         _currentWord = word.toUpperCase();
       });
+      print('DEBUG: Palavra gerada: $_currentWord. Iniciando gravação.');
       await _startPronunciationRecording();
     } else {
+      print('DEBUG: Falha ao gerar palavra. Chamando _explodeRocket.');
       _explodeRocket('Não foi possível gerar uma nova palavra para pronúncia. Fim de jogo.');
     }
   }
 
   Future<void> _startPronunciationRecording() async {
+    print('DEBUG: _startPronunciationRecording chamado.');
     if (!await _audioRecorder.hasPermission()) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -305,12 +353,15 @@ class _QuickWordGamePlayScreenState extends State<QuickWordGamePlayScreen> {
         path: _recordedFilePath!,
       );
       setState(() { _isRecording = true; });
+      print('DEBUG: Gravação iniciada. Caminho: $_recordedFilePath');
     } catch (e) {
+      print('DEBUG: Erro ao iniciar gravação: $e. Chamando _explodeRocket.');
       _explodeRocket('Erro na gravação. Jogo encerrado.');
     }
   }
 
   Future<void> _evaluatePronunciationAndContinue() async {
+    print('DEBUG: _evaluatePronunciationAndContinue chamado.');
     if (!_isRecording) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -321,6 +372,7 @@ class _QuickWordGamePlayScreenState extends State<QuickWordGamePlayScreen> {
     }
 
     if (_recordedFilePath == null || _currentWord == null) {
+      print('DEBUG: Caminho do áudio ou palavra nulos. Chamando _explodeRocket.');
       _explodeRocket('Erro: Nenhuma palavra ou áudio para avaliar.');
       return;
     }
@@ -331,12 +383,14 @@ class _QuickWordGamePlayScreenState extends State<QuickWordGamePlayScreen> {
         final path = await _audioRecorder.stop();
         _recordedFilePath = path;
         setState(() { _isRecording = false; });
+        print('DEBUG: Gravação parada. Caminho final: $_recordedFilePath');
       } catch (e) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Erro ao parar gravação. Tente novamente.')),
           );
         }
+        print('DEBUG: Erro ao parar gravação: $e. Chamando _explodeRocket.');
         _explodeRocket('Erro na gravação. Jogo encerrado.');
         return;
       }
@@ -349,13 +403,16 @@ class _QuickWordGamePlayScreenState extends State<QuickWordGamePlayScreen> {
       if (await audioFile.exists()) {
         final bytes = await audioFile.readAsBytes();
         base64Audio = base64Encode(bytes);
+        print('DEBUG: Áudio lido e codificado em Base64 (${base64Audio.length} bytes).');
       }
     } catch (e) {
+      print('DEBUG: Erro ao processar áudio para avaliação: $e. Chamando _explodeRocket.');
       _explodeRocket('Erro ao processar áudio para avaliação.');
       return;
     }
 
     if (base64Audio == null || base64Audio.isEmpty) {
+      print('DEBUG: Áudio Base64 nulo ou vazio. Chamando _explodeRocket.');
       _explodeRocket('Nenhum áudio válido para enviar para avaliação.');
       return;
     }
@@ -365,7 +422,7 @@ class _QuickWordGamePlayScreenState extends State<QuickWordGamePlayScreen> {
         const SnackBar(content: Text('Avaliando pronúncia...')),
       );
     }
-
+    print('DEBUG: Enviando áudio para evaluateQuickWordPronunciation.');
     final evaluationResult = await apiService.evaluateQuickWordPronunciation(
       widget.userId,
       _currentWord!,
@@ -374,32 +431,67 @@ class _QuickWordGamePlayScreenState extends State<QuickWordGamePlayScreen> {
     );
 
     if (mounted) {
-      ScaffoldMessenger.of(context).hideCurrentSnackBar(); // Esconder o indicador
+      ScaffoldMessenger.of(context).hideCurrentSnackBar();
     }
 
     if (evaluationResult != null) {
       final bool correct = evaluationResult['correto'] ?? false;
       final String feedback = evaluationResult['mensagem'] ?? 'Sem feedback.';
+      print(
+          'DEBUG: Resultado da avaliação: Correto=$correct, Feedback="$feedback"');
 
       if (correct) {
         _correctWords.add(_currentWord!);
+        _wordsCompleted++;
+        print('DEBUG: Pronúncia correta. Retornando ao jogo normal.');
+
         setState(() {
-          _gameMessage = 'Pronúncia CORRETA! Combustível reabastecido!';
-          _isPronunciationPhase = false; // Sai da fase de pronúncia
+          _isPronunciationPhase = false;
+          _gameMessage = 'Pronúncia correta! Continue jogando...';
         });
-        _wordsCompleted++; // Conta a palavra pronunciada com sucesso
-        _startGameLoopIfNecessary(); // Reinicia o loop do jogo e geradores
+
+        await Future.delayed(const Duration(seconds: 1));
+
+        if (!_isGameOver) {
+          _startGameLoopIfNecessary(); // volta ao jogo
+        }
       } else {
         _incorrectWords.add(_currentWord!);
-        _explodeRocket('Pronúncia INCORRETA! ${feedback} Fim de jogo.'); // Game Over por pronúncia errada
+        print('DEBUG: Pronúncia incorreta. Salvando progresso parcial...');
+
+        final apiService = Provider.of<ApiService>(context, listen: false);
+        final gameResult = GameResult(
+          userId: widget.userId,
+          score: _score,
+          correctWords: _correctWords,
+          incorrectWords: _incorrectWords,
+        );
+        await apiService.saveQuickWordGameResult(gameResult);
+        print('✅ Progresso salvo antes de _explodeRocket.');
+
+        _explodeRocket('Pronúncia INCORRETA! ${feedback} Fim de jogo.');
       }
     } else {
+      print('DEBUG: Resultado da avaliação nulo. Salvando progresso parcial.');
+
+      final apiService = Provider.of<ApiService>(context, listen: false);
+      final gameResult = GameResult(
+        userId: widget.userId,
+        score: _score,
+        correctWords: _correctWords,
+        incorrectWords: _incorrectWords,
+      );
+      await apiService.saveQuickWordGameResult(gameResult);
+      print('✅ Progresso salvo antes de _explodeRocket (erro nulo).');
+
       _explodeRocket('Erro ao avaliar a pronúncia. Fim de jogo.');
     }
   }
 
   void _startGameLoopIfNecessary() {
+    print('DEBUG: _startGameLoopIfNecessary chamado.');
     if (!_isGameOver) {
+      _backgroundMusicPlayer.resume();
       _gameLoopTimer = Timer.periodic(const Duration(milliseconds: 16), (timer) {
         if (!_isGameOver && !_isPronunciationPhase) {
           _updateGame();
@@ -420,11 +512,13 @@ class _QuickWordGamePlayScreenState extends State<QuickWordGamePlayScreen> {
 
   Future<void> _gameOver(String finalMessage, {bool win = false}) async {
     if (_isGameOver) return;
+    print('DEBUG: _gameOver chamado! Mensagem final: "$finalMessage"');
     _isGameOver = true;
     _gameLoopTimer?.cancel();
     _meteorTimer?.cancel();
     _laserShootTimer?.cancel();
     await _audioRecorder.stop();
+    _backgroundMusicPlayer.stop();
     setState(() {
       _gameMessage = finalMessage;
     });
@@ -436,7 +530,11 @@ class _QuickWordGamePlayScreenState extends State<QuickWordGamePlayScreen> {
       correctWords: _correctWords,
       incorrectWords: _incorrectWords,
     );
+    print('DEBUG: Tentando salvar resultado do Quick Word Game. Score: $_score');
     await apiService.saveQuickWordGameResult(gameResult);
+    print('DEBUG: apiService.saveQuickWordGameResult chamada concluída.');
+
+
   }
 
   @override
@@ -451,11 +549,10 @@ class _QuickWordGamePlayScreenState extends State<QuickWordGamePlayScreen> {
         backgroundColor: Colors.deepPurple[900],
         foregroundColor: Colors.white,
       ),
-      body: GestureDetector( // Reintroduzindo GestureDetector para movimentação
+      body: GestureDetector(
         onVerticalDragUpdate: (details) {
           if (!_isGameOver && !_isPronunciationPhase) {
             setState(() {
-              // Ajusta a sensibilidade do movimento, clamp limita o movimento
               _rocketY += details.primaryDelta! / (screenHeight * 0.3);
               _rocketY = _rocketY.clamp(-1.0, 1.0);
             });
@@ -463,7 +560,6 @@ class _QuickWordGamePlayScreenState extends State<QuickWordGamePlayScreen> {
         },
         child: Stack(
           children: [
-            // Space background
             Container(
               decoration: BoxDecoration(
                 gradient: LinearGradient(
@@ -477,7 +573,6 @@ class _QuickWordGamePlayScreenState extends State<QuickWordGamePlayScreen> {
               ),
             ),
 
-            // Stars
             for (int i = 0; i < 100; i++)
               Positioned(
                 left: random.nextDouble() * screenWidth,
@@ -492,21 +587,19 @@ class _QuickWordGamePlayScreenState extends State<QuickWordGamePlayScreen> {
                 ),
               ),
 
-            // Rocket - Posição X fixa, Y centralizada
             AnimatedPositioned(
               duration: const Duration(milliseconds: 50),
-              left: screenWidth * 0.2, // Mantém o foguete à esquerda
-              top: screenHeight * 0.5 + (_rocketY * screenHeight * 0.3) - 50, // Centraliza verticalmente o foguete
+              left: screenWidth * 0.2,
+              top: screenHeight * 0.5 + (_rocketY * screenHeight * 0.3) - 50,
               child: _showExplosion
                   ? Image.asset('assets/explosion.png', width: 100, height: 100)
                   : Image.asset('assets/rocket.png', width: 60, height: 100),
             ),
 
-            // Lasers
             for (final laser in _lasers)
               Positioned(
-                left: screenWidth * 0.2 + 60 + (laser['x']! * screenWidth * 0.3), // Ajusta o disparo do laser para sair da frente do foguete
-                top: screenHeight * 0.5 + (laser['y']! * screenHeight * 0.3) - 2, // Ajusta a posição vertical do laser
+                left: screenWidth * 0.2 + 60 + (laser['x']! * screenWidth * 0.3),
+                top: screenHeight * 0.5 + (laser['y']! * screenHeight * 0.3) - 2,
                 child: Container(
                   width: 40,
                   height: 4,
@@ -519,20 +612,18 @@ class _QuickWordGamePlayScreenState extends State<QuickWordGamePlayScreen> {
                 ),
               ),
 
-            // Meteors - Posição Y ajustada para serem mais centralizados
             for (final meteor in _meteors)
               Positioned(
-                left: screenWidth * 0.5 + (meteor['x'] * screenWidth * 0.5) - (meteor['size'] * 60), // Ajusta X para centralizar o meteoro
-                top: screenHeight * 0.5 + (meteor['y'] * screenHeight * 0.3) - (meteor['size'] * 60), // Ajusta Y para centralizar o meteoro
+                left: screenWidth * 0.5 + (meteor['x'] * screenWidth * 0.5) - (meteor['size'] * 60),
+                top: screenHeight * 0.5 + (meteor['y'] * screenHeight * 0.3) - (meteor['size'] * 60),
                 child: Transform.rotate(
-                  angle: meteor['x'] * 2, // Rotation effect
+                  angle: meteor['x'] * 2,
                   child: Image.asset('assets/meteor.png',
                       width: meteor['size'] * 120,
                       height: meteor['size'] * 120),
                 ),
               ),
 
-            // Success effect
             if (_showSuccess)
               Center(
                 child: Container(
@@ -542,7 +633,6 @@ class _QuickWordGamePlayScreenState extends State<QuickWordGamePlayScreen> {
                 ),
               ),
 
-            // Game HUD
             Positioned(
               top: 20,
               left: 0,
@@ -586,7 +676,7 @@ class _QuickWordGamePlayScreenState extends State<QuickWordGamePlayScreen> {
                       ],
                     ),
                   ),
-                  if (_currentWord != null && _isPronunciationPhase) // Mostra a palavra apenas na fase de pronúncia
+                  if (_currentWord != null && _isPronunciationPhase)
                     Padding(
                       padding: const EdgeInsets.only(top: 20),
                       child: Text(
@@ -608,11 +698,10 @@ class _QuickWordGamePlayScreenState extends State<QuickWordGamePlayScreen> {
               ),
             ),
 
-            // Botão "Enviar Pronúncia" (somente na fase de pronúncia)
             if (_isPronunciationPhase && !_isGameOver)
               Center(
                 child: Padding(
-                  padding: const EdgeInsets.only(top: 200), // Ajuste a posição conforme necessário
+                  padding: const EdgeInsets.only(top: 200),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
@@ -636,7 +725,6 @@ class _QuickWordGamePlayScreenState extends State<QuickWordGamePlayScreen> {
                 ),
               ),
 
-            // Game over overlay
             if (_isGameOver)
               Container(
                 color: Colors.black.withOpacity(0.7),
@@ -671,7 +759,6 @@ class _QuickWordGamePlayScreenState extends State<QuickWordGamePlayScreen> {
                           ),
                         ),
                         onPressed: () {
-                          // Reinicia o jogo
                           _startGame();
                         },
                         child: const Text(
@@ -679,17 +766,17 @@ class _QuickWordGamePlayScreenState extends State<QuickWordGamePlayScreen> {
                           style: TextStyle(fontSize: 20),
                         ),
                       ),
-                      const SizedBox(height: 15), // Espaçamento entre os botões
+                      const SizedBox(height: 15),
                       ElevatedButton(
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.blueGrey, // Outra cor para diferenciar
+                          backgroundColor: Colors.blueGrey,
                           padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(20),
                           ),
                         ),
                         onPressed: () {
-                          Navigator.of(context).pop(true); // Retorna 'true' para a tela anterior (QuickWordGameScreen)
+                          Navigator.of(context).pop(true);
                         },
                         child: const Text(
                           'Voltar para o Início',
