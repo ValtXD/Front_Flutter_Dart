@@ -1,7 +1,9 @@
 // lib/screens/main_menu/settings_subscreens/feedback_screen.dart
 
 import 'package:flutter/material.dart';
-import 'package:url_launcher/url_launcher.dart'; // NOVO: Import para enviar e-mail
+import 'package:provider/provider.dart'; // NOVO: Import do Provider para usar ApiService
+import 'package:funfono1/api/api_service.dart'; // NOVO: Import do ApiService
+// Removido import de url_launcher, pois não será mais usado diretamente
 
 class FeedbackScreen extends StatefulWidget {
   const FeedbackScreen({super.key});
@@ -13,6 +15,7 @@ class FeedbackScreen extends StatefulWidget {
 class _FeedbackScreenState extends State<FeedbackScreen> {
   final _feedbackController = TextEditingController();
   double _rating = 3.0; // Avaliação inicial de 3 estrelas
+  bool _isSending = false; // Estado para controlar o envio
 
   @override
   void dispose() {
@@ -20,39 +23,43 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
     super.dispose();
   }
 
-  // NOVO: Função para enviar o feedback por e-mail
-  Future<void> _sendFeedbackEmail() async {
-    final feedbackText = _feedbackController.text;
-    final String subject = 'Feedback FunFono - Avaliação de ${_rating.round()} estrelas';
-    final String body = 'Avaliação: ${_rating.round()} estrelas\n\nFeedback:\n$feedbackText';
+  void _submitFeedback() async {
+    if (_isSending) return; // Evita múltiplos cliques
 
-    final Uri emailLaunchUri = Uri(
-      scheme: 'mailto',
-      path: 'aamon.ling00@gmail.com', // E-MAIL DE SUPORTE PARA FEEDBACK
-      queryParameters: {
-        'subject': subject,
-        'body': body,
-      },
+    final feedbackText = _feedbackController.text.trim();
+    if (feedbackText.isEmpty && _rating == 0.0) { // Garante que algo seja enviado
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Por favor, digite seu feedback ou avalie o aplicativo.')),
+      );
+      return;
+    }
+
+    setState(() {
+      _isSending = true;
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Enviando feedback...')),
     );
 
-    try {
-      if (await canLaunchUrl(emailLaunchUri)) {
-        await launchUrl(emailLaunchUri);
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Obrigado pelo seu feedback! Abrindo aplicativo de e-mail.')),
-        );
-        _feedbackController.clear();
-        setState(() {
-          _rating = 3.0; // Resetar avaliação
-        });
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Não foi possível abrir o aplicativo de e-mail. Por favor, tente novamente.')),
-        );
-      }
-    } catch (e) {
+    final apiService = Provider.of<ApiService>(context, listen: false);
+    final bool success = await apiService.sendFeedback(feedbackText, _rating.round());
+
+    setState(() {
+      _isSending = false;
+    });
+
+    if (success) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Erro ao enviar feedback: $e')),
+        const SnackBar(content: Text('Obrigado! Seu feedback foi enviado com sucesso.')),
+      );
+      _feedbackController.clear();
+      setState(() {
+        _rating = 3.0; // Resetar avaliação
+      });
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Falha ao enviar feedback. Tente novamente mais tarde.')),
       );
     }
   }
@@ -90,9 +97,9 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
               value: _rating,
               min: 1.0,
               max: 5.0,
-              divisions: 4, // 1, 2, 3, 4, 5 estrelas
+              divisions: 4,
               label: _rating.round().toString(),
-              onChanged: (double value) {
+              onChanged: _isSending ? null : (double value) { // Desabilita slider durante envio
                 setState(() {
                   _rating = value;
                 });
@@ -119,6 +126,7 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
             TextField(
               controller: _feedbackController,
               maxLines: 5,
+              enabled: !_isSending, // Desabilita campo durante envio
               decoration: InputDecoration(
                 hintText: 'Escreva seu feedback aqui...',
                 border: OutlineInputBorder(
@@ -131,14 +139,16 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
 
             Center(
               child: ElevatedButton(
-                onPressed: _sendFeedbackEmail, // CHAMA A NOVA FUNÇÃO DE ENVIAR E-MAIL
+                onPressed: _isSending ? null : _submitFeedback, // Desabilita botão durante envio
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.blue,
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 15),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                 ),
-                child: const Text('Enviar Feedback', style: TextStyle(fontSize: 18)),
+                child: _isSending
+                    ? const CircularProgressIndicator(color: Colors.white) // Mostra progresso
+                    : const Text('Enviar Feedback', style: TextStyle(fontSize: 18)),
               ),
             ),
           ],

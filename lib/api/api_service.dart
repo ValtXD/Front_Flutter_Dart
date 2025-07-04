@@ -498,4 +498,32 @@ class ApiService {
     }
   }
 
+  // --- Rotas de Feedback ---
+
+  Future<bool> sendFeedback(String feedbackText, int rating) async {
+    final url = Uri.parse('$_baseUrl/feedback/send_feedback'); // NOVO ENDPOINT
+    try {
+      final response = await http.post(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({
+          'feedback_text': feedbackText,
+          'rating': rating,
+          // 'user_id': userId, // Envie o ID do usuário se necessário
+        }),
+      );
+      if (response.statusCode == 200) {
+        print('Feedback enviado para o backend com sucesso!');
+        return true;
+      } else {
+        print('Erro ao enviar feedback para o backend: ${response.statusCode} - ${response.body}');
+        return false;
+      }
+    } catch (e, stack) {
+      print('Exceção ao enviar feedback para o backend: $e');
+      print('Stack Trace Feedback API: $stack');
+      return false;
+    }
+  }
+
 }
