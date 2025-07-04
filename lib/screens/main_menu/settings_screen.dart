@@ -2,12 +2,11 @@
 
 import 'package:flutter/material.dart';
 
-// NOVO: Imports para as sub-telas de configuração
-import 'package:funfono1/screens/main_menu/settings_subscreens/language_settings_screen.dart';
-import 'package:funfono1/screens/main_menu/settings_subscreens/theme_settings_screen.dart';
+// Imports para as sub-telas de configuração
 import 'package:funfono1/screens/main_menu/settings_subscreens/quick_help_screen.dart';
 import 'package:funfono1/screens/main_menu/settings_subscreens/social_media_links_screen.dart';
 import 'package:funfono1/screens/main_menu/settings_subscreens/feedback_screen.dart';
+import 'package:funfono1/screens/main_menu/settings_subscreens/delete_account_screen.dart'; // NOVO: Import para a tela "Excluir Conta"
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
@@ -22,7 +21,7 @@ class SettingsScreen extends StatelessWidget {
       ),
       body: ListView(
         children: [
-          // Item de Configuração: Idioma
+          // Item de Configuração: Idioma (Comentado)
           /*
           ListTile(
             leading: const Icon(Icons.language),
@@ -36,8 +35,8 @@ class SettingsScreen extends StatelessWidget {
             },
           ),
           const Divider(),
-*/
-          // Item de Configuração: Tema
+          */
+          // Item de Configuração: Tema (Comentado)
           /*
           ListTile(
             leading: const Icon(Icons.palette),
@@ -51,7 +50,7 @@ class SettingsScreen extends StatelessWidget {
             },
           ),
           const Divider(),
-*/
+          */
           // Item de Configuração: Ajuda Rápida
           ListTile(
             leading: const Icon(Icons.help_outline),
@@ -93,6 +92,20 @@ class SettingsScreen extends StatelessWidget {
             },
           ),
           const Divider(),
+
+          // NOVO: Item de Configuração: Excluir Conta
+          ListTile(
+            leading: const Icon(Icons.delete_forever, color: Colors.red), // Ícone de exclusão
+            title: const Text('Excluir Conta'),
+            subtitle: const Text('Gerenciar ou excluir sua conta permanentemente'),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const DeleteAccountScreen()),
+              );
+            },
+          ),
+          const Divider(), // Divisor após o novo item
         ],
       ),
     );

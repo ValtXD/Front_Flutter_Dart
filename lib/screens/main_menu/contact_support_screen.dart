@@ -106,30 +106,7 @@ class ContactSupportScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 20),
-            const Text(
-              'Você também pode nos encontrar no Instagram:',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
-            ),
-            const SizedBox(height: 10),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.start,
-              children: [
-                InkWell(
-                  onTap: () => _launchInstagram(context),
-                  child: Row(
-                    children: [
-                      // Certifique-se de ter um ícone do Instagram em seus assets (ex: assets/images/instagram_icon.png)
-                      Image.asset('assets/images/instagram_icon.png', height: 30),
-                      const SizedBox(width: 10),
-                      const Text(
-                        '@funfono',
-                        style: TextStyle(fontSize: 16, color: Colors.blue),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
+            //Instagram -- Removido
             const Spacer(),
             const Align(
               alignment: Alignment.bottomCenter,

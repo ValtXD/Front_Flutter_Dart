@@ -47,9 +47,6 @@ dependencies:
   flutter_tts: ^4.0.0 # Adicione esta linha (use a versão mais recente compatível se esta falhar)
   url_launcher: ^6.2.0
 
-  flutter_localizations: # Necessário para internacionalização e temas
-    sdk: flutter
-
 dev_dependencies:
   flutter_test:
     sdk: flutter
