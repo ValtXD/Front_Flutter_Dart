@@ -11,8 +11,8 @@ import 'package:funfono1/models/game_result.dart';
 import '../models/attempt_data.dart';
 
 class ApiService {
-  static const String _baseUrl = 'http://192.168.0.9:8080/api'; // Certifique-se de que este IP esteja correto
-  //static const String _baseUrl = 'http://192.168.188.76:8080/api';
+  static const String _baseUrl = 'http://192.168.0.9:8080/api'; // Certifique-se de que este IP esteja correto --> Casa
+  //static const String _baseUrl = 'http://10.80.248.25:8080/api'; // Teste
   // --- 10.205.6.59 --- Ufam --- ICOMP2-ALUNOS
   // --- Rotas de Autenticação ---
 

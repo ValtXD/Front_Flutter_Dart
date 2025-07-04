@@ -13,6 +13,11 @@ import 'package:funfono1/screens/main_menu/assistant_bot_screen.dart';
 import 'package:funfono1/screens/main_menu/pronunciation_tips_screen.dart';
 import 'package:funfono1/screens/mini_games/mini_games_selection_screen.dart';
 
+// NOVO: Imports para as novas telas do Drawer
+import 'package:funfono1/screens/main_menu/about_screen.dart'; // Import para a tela "Sobre"
+import 'package:funfono1/screens/main_menu/contact_support_screen.dart'; // Import para a tela "Contato / Suporte"
+import 'package:funfono1/screens/main_menu/settings_screen.dart'; // Import para a tela "Configurações"
+
 class MenuScreen extends StatefulWidget {
   const MenuScreen({super.key});
 
@@ -23,8 +28,6 @@ class MenuScreen extends StatefulWidget {
 class _MenuScreenState extends State<MenuScreen> {
   User? _currentUser;
   final TextEditingController _searchController = TextEditingController();
-  // Mapeamento de títulos para widgets de tela (para pesquisa e navegação)
-  // Certifique-se de que cada botão que você quer que seja pesquisável esteja aqui
   final Map<String, Widget> _menuScreens = {
     'Exercícios': const ExercisesMenuScreen(),
     'Progresso': const ProgressScreen(),
@@ -51,7 +54,6 @@ class _MenuScreenState extends State<MenuScreen> {
   }
 
   Future<void> _loadCurrentUser() async {
-    // Usando AuthStateService para carregar o usuário
     final user = await AuthStateService().getLoggedInUser();
     if (mounted) {
       setState(() {
@@ -60,7 +62,6 @@ class _MenuScreenState extends State<MenuScreen> {
     }
   }
 
-  // Função para filtrar os títulos dos menus
   void _filterMenuTitles() {
     final query = _searchController.text.toLowerCase();
     setState(() {
@@ -74,11 +75,9 @@ class _MenuScreenState extends State<MenuScreen> {
     });
   }
 
-  // Função auxiliar para construir um botão de menu individual
   Widget _buildMenuItemButton(BuildContext context, String title, IconData icon, Widget screen) {
-    // Verifica se o título atual está na lista de títulos filtrados para ser exibido
     if (!_filteredMenuTitles.contains(title)) {
-      return const SizedBox.shrink(); // Retorna um widget vazio se não estiver filtrado
+      return const SizedBox.shrink();
     }
 
     return GestureDetector(
@@ -95,7 +94,7 @@ class _MenuScreenState extends State<MenuScreen> {
         decoration: BoxDecoration(
           border: Border.all(color: Colors.blue, width: 2),
           borderRadius: BorderRadius.circular(12),
-          color: Colors.blue.withOpacity(0.1), // Fundo levemente colorido
+          color: Colors.blue.withOpacity(0.1),
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -119,26 +118,24 @@ class _MenuScreenState extends State<MenuScreen> {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        title: const Text('FunFono'), // Título mais geral para a App Bar
+        title: const Text('FunFono'),
         centerTitle: true,
         backgroundColor: Colors.blue,
         foregroundColor: Colors.white,
-        automaticallyImplyLeading: false, // Remove a seta de voltar padrão
+        automaticallyImplyLeading: false,
 
-        // Ícone do Drawer no canto superior esquerdo
         leading: Builder(
           builder: (BuildContext context) {
             return IconButton(
-              icon: const Icon(Icons.menu), // Ícone de menu
+              icon: const Icon(Icons.menu),
               onPressed: () {
-                Scaffold.of(context).openDrawer(); // Abre o Drawer
+                Scaffold.of(context).openDrawer();
               },
             );
           },
         ),
       ),
 
-      // Drawer (Menu Lateral)
       drawer: Drawer(
         child: ListView(
           padding: EdgeInsets.zero,
@@ -177,17 +174,24 @@ class _MenuScreenState extends State<MenuScreen> {
               leading: const Icon(Icons.home),
               title: const Text('Menu Principal'),
               onTap: () {
-                Navigator.pop(context); // Fecha o drawer
-                // Já estamos no menu principal
+                Navigator.pop(context);
               },
             ),
-            const Divider(), // Divisor
+            const Divider(),
             ListTile(
               leading: const Icon(Icons.info),
               title: const Text('Sobre'),
               onTap: () {
                 Navigator.pop(context); // Fecha o drawer
-                // Lógica para navegar para a tela "Sobre"
+                Navigator.push(context, MaterialPageRoute(builder: (context) => const AboutScreen())); // NOVO: Navega para a tela Sobre
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.phone), // NOVO: Ícone para Contato/Suporte
+              title: const Text('Contato / Suporte'), // NOVO: Título
+              onTap: () {
+                Navigator.pop(context); // Fecha o drawer
+                Navigator.push(context, MaterialPageRoute(builder: (context) => const ContactSupportScreen())); // NOVO: Navega para a tela Contato/Suporte
               },
             ),
             ListTile(
@@ -195,17 +199,15 @@ class _MenuScreenState extends State<MenuScreen> {
               title: const Text('Configurações'),
               onTap: () {
                 Navigator.pop(context); // Fecha o drawer
-                // Lógica para navegar para a tela "Configurações"
+                Navigator.push(context, MaterialPageRoute(builder: (context) => const SettingsScreen())); // NOVO: Navega para a tela Configurações
               },
             ),
             ListTile(
               leading: const Icon(Icons.logout),
               title: const Text('Sair'),
               onTap: () async {
-                Navigator.pop(context); // Fecha o drawer
-                // Lógica para deslogar o usuário
+                Navigator.pop(context);
                 await AuthStateService().logout();
-                // Navegar para a tela de login/boas-vindas
                 if (mounted) {
                   Navigator.pushNamedAndRemoveUntil(context, '/', (route) => false);
                 }
@@ -258,7 +260,7 @@ class _MenuScreenState extends State<MenuScreen> {
                 ),
               ),
             ),
-            const SizedBox(height: 30), // Espaçamento após a barra de pesquisa
+            const SizedBox(height: 30),
 
             // As Rows de botões existentes, agora usando _buildMenuItemButton
             Row(

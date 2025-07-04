@@ -42,10 +42,13 @@ dependencies:
   json_annotation: ^4.9.0 # Para modelos de dados (opcional, mas bom para consistência com o backend)
   shared_preferences: ^2.2.3
   fl_chart: ^0.68.0 # Nova dependência para gráficos
-  intl: ^0.19.0 # Para formatação de números/datas se necessário (bom ter)
+  intl: ^0.20.2 # Para formatação de números/datas se necessário (bom ter)
   audioplayers: ^6.0.0 # Certifique-se de que esta linha está presente e a versão é compatível
   flutter_tts: ^4.0.0 # Adicione esta linha (use a versão mais recente compatível se esta falhar)
+  url_launcher: ^6.2.0
 
+  flutter_localizations: # Necessário para internacionalização e temas
+    sdk: flutter
 
 dev_dependencies:
   flutter_test:
