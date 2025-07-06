@@ -301,7 +301,7 @@ class _SpeechExerciseScreenState extends State<SpeechExerciseScreen> {
                   const SizedBox(height: 10),
                   Text(
                     _isRecording
-                        ? 'Gravando...'
+                        ? 'Gravando... Pronuncie a frase!'
                         : 'Toque para Falar',
                     style: const TextStyle(fontSize: 18),
                   ),

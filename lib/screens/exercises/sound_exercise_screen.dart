@@ -407,7 +407,7 @@ class _SoundExerciseScreenState extends State<SoundExerciseScreen> {
                   const SizedBox(height: 10),
                   Text(
                     _isRecording
-                        ? 'Gravando...'
+                        ? 'Gravando... Pronuncie a palavra!'
                         : 'Pressione e segure para gravar',
                     style: const TextStyle(fontSize: 18),
                   ),

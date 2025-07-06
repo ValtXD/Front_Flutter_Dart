@@ -18,6 +18,9 @@ import 'package:funfono1/screens/main_menu/about_screen.dart'; // Import para a 
 import 'package:funfono1/screens/main_menu/contact_support_screen.dart'; // Import para a tela "Contato / Suporte"
 import 'package:funfono1/screens/main_menu/settings_screen.dart'; // Import para a tela "Configurações"
 
+//NOVO
+import 'package:funfono1/screens/main_menu/daily_words_screen.dart';
+
 class MenuScreen extends StatefulWidget {
   const MenuScreen({super.key});
 
@@ -35,6 +38,7 @@ class _MenuScreenState extends State<MenuScreen> {
     'Dicas': PronunciationTipsScreen(),
     'Mini Games': const MiniGamesSelectionScreen(),
     'Assistente Bot': const AssistantBotScreen(),
+    'Palavras Diárias': const DailyWordsScreen(),
   };
   List<String> _filteredMenuTitles = [];
 
@@ -283,6 +287,7 @@ class _MenuScreenState extends State<MenuScreen> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 _buildMenuItemButton(context, 'Mini Games', Icons.gamepad_outlined, const MiniGamesSelectionScreen()),
+                _buildMenuItemButton(context, 'Palavras Diárias', Icons.message, const DailyWordsScreen()),
               ],
             ),
           ],

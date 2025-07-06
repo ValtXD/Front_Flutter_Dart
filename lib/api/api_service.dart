@@ -7,6 +7,7 @@ import 'package:funfono1/models/questionnaire.dart';
 import 'package:funfono1/models/attempt_history.dart'; // NOVO IMPORT
 import 'package:funfono1/models/reminder.dart'; // NOVO IMPORT
 import 'package:funfono1/models/game_result.dart';
+import 'package:funfono1/models/daily_word_attempt.dart';
 
 import '../models/attempt_data.dart';
 
@@ -542,6 +543,137 @@ class ApiService {
       print('Exceção ao excluir conta do usuário: $e');
       print('Stack Trace Delete Account: $stack');
       return false;
+    }
+  }
+
+  // --- Rotas de Palavras Diárias ---
+  Future<List<String>?> generateDailyWords(String userId) async {
+    // ATENÇÃO: Verifique o caminho da rota no backend!
+    final url = Uri.parse('$_baseUrl/daily_words/generate_word');
+    print('DEBUG API: Enviando GET para $url');
+    try {
+      final response = await http.get(url, headers: {'user_id': userId});
+      print('DEBUG API: Resposta de $url - Status Code: ${response.statusCode}');
+      if (response.body.isNotEmpty) {
+        print('DEBUG API: Resposta de $url - Corpo: ${response.body}');
+      }
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        if (data != null && data['words'] is List) {
+          return (data['words'] as List).cast<String>();
+        }
+        return null;
+      } else {
+        print('ERRO API: Falha ao gerar palavras diárias. Status: ${response.statusCode}. Corpo: ${response.body}');
+        return null;
+      }
+    } catch (e, stack) {
+      print('ERRO API: Exceção ao gerar palavras diárias: $e');
+      print('Stack Trace API: $stack');
+      return null;
+    }
+  }
+
+  // NOVO e DEDICADO: Avaliação de pronúncia para Palavras Diárias
+  Future<Map<String, dynamic>?> evaluateDailyWordPronunciation(
+      String userId, String word, String userSpeechBase64) async {
+    // ATENÇÃO: Verifique o caminho da rota no backend!
+    final url = Uri.parse('$_baseUrl/daily_words/evaluate_pronunciation');
+    print('DEBUG API: Enviando POST para $url');
+    try {
+      final response = await http.post(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({
+          'user_id': userId,
+          'word': word,
+          'user_speech_base64': userSpeechBase64,
+        }),
+      );
+      print('DEBUG API: Resposta de $url - Status Code: ${response.statusCode}');
+      if (response.body.isNotEmpty) {
+        print('DEBUG API: Resposta de $url - Corpo: ${response.body}');
+      }
+      if (response.statusCode == 200) {
+        return json.decode(response.body);
+      } else {
+        print('ERRO API: Falha ao avaliar pronúncia de palavra diária. Status: ${response.statusCode}. Corpo: ${response.body}');
+        return null;
+      }
+    } catch (e, stack) {
+      print('ERRO API: Exceção ao avaliar pronúncia de palavra diária: $e');
+      print('Stack Trace API: $stack');
+      return null;
+    }
+  }
+
+  Future<bool> saveDailyWordAttempt({
+    required String userId,
+    required String word,
+    required String userTranscription,
+    required bool isCorrect,
+    required String tip,
+  }) async {
+    // ATENÇÃO: Verifique o caminho da rota no backend!
+    final url = Uri.parse('$_baseUrl/daily_words/save_attempt');
+    print('DEBUG API: Enviando POST para $url');
+    try {
+      final response = await http.post(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({
+          'user_id': userId,
+          'word': word,
+          'user_transcription': userTranscription,
+          'is_correct': isCorrect,
+          'tip': tip,
+        }),
+      );
+      print('DEBUG API: Resposta de $url - Status Code: ${response.statusCode}');
+      if (response.body.isNotEmpty) {
+        print('DEBUG API: Resposta de $url - Corpo: ${response.body}');
+      }
+      if (response.statusCode == 200) {
+        print('DEBUG API: Tentativa de palavra diária salva com sucesso.');
+        return true;
+      } else {
+        print('ERRO API: Falha ao salvar tentativa de palavra diária. Status: ${response.statusCode}. Corpo: ${response.body}');
+        return false;
+      }
+    } catch (e, stack) {
+      print('ERRO API: Exceção ao salvar tentativa de palavra diária: $e');
+      print('Stack Trace API: $stack');
+      return false;
+    }
+  }
+
+  Future<List<DailyWordAttempt>?> getDailyWordHistory(String userId) async {
+    // ATENÇÃO: Verifique o caminho da rota no backend!
+    final url = Uri.parse('$_baseUrl/daily_words/history/$userId');
+    print('DEBUG API: Enviando GET para $url');
+    try {
+      final response = await http.get(url);
+      print('DEBUG API: Resposta de $url - Status Code: ${response.statusCode}');
+      if (response.body.isNotEmpty) {
+        print('DEBUG API: Resposta de $url - Corpo: ${response.body}');
+      }
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        if (data != null && data['history'] is List) {
+          return (data['history'] as List)
+              .map((e) => DailyWordAttempt.fromJson(e as Map<String, dynamic>))
+              .toList();
+        }
+        print('ERRO API: Corpo da resposta de histórico de palavras diárias inválido ou vazio.');
+        return [];
+      } else {
+        print('ERRO API: Falha ao obter histórico de palavras diárias. Status: ${response.statusCode}. Corpo: ${response.body}');
+        return [];
+      }
+    } catch (e, stack) {
+      print('ERRO API: Exceção ao obter histórico de palavras diárias: $e');
+      print('Stack Trace API: $stack');
+      return [];
     }
   }
 
