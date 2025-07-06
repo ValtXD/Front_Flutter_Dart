@@ -526,4 +526,23 @@ class ApiService {
     }
   }
 
+  // NOVO: Método para excluir a conta do usuário
+  Future<bool> deleteUserAccount(String userId) async {
+    final url = Uri.parse('$_baseUrl/users/$userId/delete_account');
+    try {
+      final response = await http.delete(url); // Usando DELETE
+      if (response.statusCode == 200) {
+        print('Conta do usuário excluída com sucesso!');
+        return true;
+      } else {
+        print('Erro ao excluir conta do usuário: ${response.statusCode} - ${response.body}');
+        return false;
+      }
+    } catch (e, stack) {
+      print('Exceção ao excluir conta do usuário: $e');
+      print('Stack Trace Delete Account: $stack');
+      return false;
+    }
+  }
+
 }

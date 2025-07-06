@@ -1,7 +1,9 @@
+// lib/main.dart
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:funfono1/api/api_service.dart';
-import 'package:funfono1/screens/auth/welcome_screen.dart';
+import 'package:funfono1/screens/auth/welcome_screen.dart'; // Import da WelcomeScreen
 
 void main() {
   runApp(
@@ -37,6 +39,13 @@ class MyApp extends StatelessWidget {
         ),
       ),
       home: const WelcomeScreen(), // A tela inicial do seu aplicativo
+
+      // ACRESCENTADO: Definição de rotas nomeadas.
+      // Incluímos apenas a rota /welcome aqui para resolver o erro.
+      routes: {
+        '/welcome': (context) => const WelcomeScreen(),
+        // Você pode adicionar outras rotas nomeadas aqui se precisar delas.
+      },
     );
   }
 }
